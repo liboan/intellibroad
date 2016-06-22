@@ -45,6 +45,7 @@ def get_credentials():
 
         print("Storing credentials to: " + credentials_path)
 
+
     return credentials
 
 
@@ -55,23 +56,15 @@ http_auth = credentials.authorize(httplib2.Http())
 
 service = discovery.build("calendar", "v3", http = http_auth)
 
-# I've collected all the email addresses of conference rooms for
-# Google Calendar and they are stored in a JSON file.
+calendarId = "broadinstitute.com_36393736333139393439@resource.calendar.google.com"
 
-with open("conference_room_emails.json", 'r') as f:
-    conference_room_emails = json.loads(f.read())
+fieldString = "items(attendees(displayName,email,responseStatus),created,creator,description,id,location,summary)"
 
-# Now we need to add these calendars to the list. 
+eventList = service.events().list(calendarId=calendarId, orderBy="updated", fields = fieldString).execute()
 
-for i in conference_room_emails:
-    request_body = {
-        'id': i["id"]
-    }
+print(json.dumps(eventList, indent=4, separators=(',', ':')))
 
-    outputString = "add success \t"
-    try:
-        service.calendarList().insert(body = request_body).execute()
-    except:
-        outputString = "\033[1m*NOT FOUND* \033[0m\t"
-    outputString += i["name"]
-    print(outputString)
+
+
+
+
