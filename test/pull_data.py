@@ -58,9 +58,11 @@ service = discovery.build("calendar", "v3", http = http_auth)
 
 calendarId = "broadinstitute.com_36393736333139393439@resource.calendar.google.com"
 
-fieldString = "items(attendees(displayName,email,responseStatus),created,creator,description,id,location,summary)"
+timeString = datetime.datetime.now().isoformat('T') + "z"
 
-eventList = service.events().list(calendarId=calendarId, orderBy="updated", fields = fieldString).execute()
+fieldString = "items(attendees(displayName,email,optional,resource,responseStatus),creator(displayName,email),description,htmlLink,id,location,organizer(displayName,email),start/dateTime,status,summary)"
+
+eventList = service.events().list(calendarId=calendarId, orderBy="updated", timeMax=timeString, fields = fieldString).execute()
 
 print(json.dumps(eventList, indent=4, separators=(',', ':')))
 
