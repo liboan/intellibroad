@@ -57,7 +57,7 @@ http_auth = credentials.authorize(httplib2.Http())
 
 service = discovery.build("calendar", "v3", http = http_auth)
 
-calendarList = service.calendarList().list().execute()
+calendarList = service.calendarList().list(showHidden=True).execute()
 
 for i in calendarList['items']:
     print(i["id"])
