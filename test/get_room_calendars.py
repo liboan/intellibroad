@@ -54,7 +54,9 @@ for calendar in calendarListResource["items"]:
 	if calendar["resourceType"] == "Conference Room":
 		conference_room_emails.append({"id": calendar["resourceEmail"],"name": calendar["resourceName"]})
 
-string = json.dumps(conference_room_emails)
+string = json.dumps(conference_room_emails, indent=4, separators=(',', ':'))
+
+print(string)
 
 f = open("conference_room_emails.json", 'w')
 f.write(string)
