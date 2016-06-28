@@ -28,6 +28,9 @@ APPLICATION_NAME = 'IntelliBroad'
 # Working off Google's own Calendar API example
 
 def get_credentials(): 
+    """get OAauth2 credentials from local storage OR create new credentials\n
+        returns Credentials object
+    """
     credentials_path = os.path.join(CREDENTIALS_DIR, CREDENTIALS_FILE)
     store = oauth2client.file.Storage(credentials_path)
     credentials = store.locked_get()
@@ -48,51 +51,83 @@ def get_credentials():
     return credentials
 
 
-
 credentials = get_credentials()
 
 http_auth = credentials.authorize(httplib2.Http())
 
-
 service = discovery.build("calendar", "v3", http = http_auth)
-
-# Instead of below, I will grab the addresses straight from Google Apps Admin SDK
 
 admin_service = discovery.build('admin', 'directory_v1', http = http_auth) # NOTE: Different service 
 
-calendarListResource = admin_service.resources().calendars().list(customer="my_customer").execute()
+def update_calendars():
+    """Gets room email addresses from Google Apps Admin SDK, and adds them to own list of calendars.
+        Returns a list containing the email addresses that were successfully added.
+    """
 
-print("Requesting list of resources from Google Apps Admin SDK")
+    calendarListResource = admin_service.resources().calendars().list(customer="my_customer").execute()
 
-conference_room_emails = [] # list containing all room emails and names
+    print("Requesting list of resources from Google Apps Admin SDK")
 
-for calendar in calendarListResource["items"]:
-    if calendar["resourceType"] == "Conference Room":
-        conference_room_emails.append({"id": calendar["resourceEmail"],"name": calendar["resourceName"]})
+    conference_room_emails = [] # list containing all room emails and names
 
-string = json.dumps(conference_room_emails, indent=4, separators=(',', ':'))
+    for calendar in calendarListResource["items"]:
+        if calendar["resourceType"] == "Conference Room":
+            conference_room_emails.append({"id": calendar["resourceEmail"],"name": calendar["resourceName"]})
 
-print(string)
+    # print(json.dumps(conference_room_emails, indent=4, separators=(',', ':')))
 
-# I've collected all the email addresses of conference rooms for
-# Google Calendar and they are stored in a JSON file.
+    print("Begin adding calendars to list")
 
-# with open("conference_room_emails.json", 'r') as f:
-#     conference_room_emails = json.loads(f.read())
+    added_room_emails = [] # the list of calendar emails that were successfully added, that we will be puliing data from
 
-# Now we need to add these calendars to the list. 
+    for i in conference_room_emails:
+        request_body = {
+            'id': i["id"]
+        }
 
-print("Begin adding calendars to list")
+        outputString = "add success \t"
+        try:
+            service.calendarList().insert(body = request_body).execute()
+            added_room_emails.append(i['id'])
+        except Exception, e:
+            # print(e)
+            # some of the calendars we don't have access to, API returns 404 errors when we attempt to add
+            outputString = "\033[1m*404 error* \033[0m\t"
+        outputString += i["name"]
+        print(outputString)
 
-for i in conference_room_emails:
-    request_body = {
-        'id': i["id"]
-    }
+    return added_room_emails
 
-    outputString = "add success \t"
-    try:
-        service.calendarList().insert(body = request_body).execute()
-    except Exception, e:
-        outputString = "\033[1m*404 error* \033[0m\t"
-    outputString += i["name"]
-    print(outputString)
+
+def pull_calendar_events(calendarId, timeMax=datetime.datetime.now().isoformat('T')):
+    """
+    Pulls all events from one calendar. Returns list of events from API call ('items' field)
+    timeMax: Timestring for upper bound of item start time (to prevent pulling distant-future events)
+    """
+
+    # NOTE: Pulling events since last update time will be implemented later!
+
+
+    eventList = [] # List of events returned by API.
+    nextPageToken = ""
+    while True:
+        print("------NEW REQUEST------")
+
+        response = service.events().list(calendarId=calendarId, orderBy="updated", pageToken = nextPageToken, timeMax=timeString,fields = fieldString).execute()
+        if 'items' in response:
+            eventList += response['items'] # if the response has events, add them
+
+        if "nextPageToken" not in response:
+            print("DONE")
+            break 
+            # If there's no nextPageToken in response body, we break out and return what we have
+        else:
+            print("NEXT PAGE TOKEN: " + response['nextPageToken'])
+            nextPageToken = response['nextPageToken'] # Otherwise, make another request for next page
+
+    return eventList
+
+
+
+
+

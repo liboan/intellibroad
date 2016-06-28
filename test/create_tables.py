@@ -15,7 +15,7 @@ def create_connection(db_file):
 		print(e)
 	return None 
 
-def main():
+def create_tables():
 	db_file = "intellibroad.db"
 
 	conn = create_connection(db_file)
@@ -33,5 +33,7 @@ def main():
 	conn.commit()
 	conn.close()
 
+	print("Commited changes and closed database connection")
+
 if __name__ == '__main__':
-	main()
+	create_tables()

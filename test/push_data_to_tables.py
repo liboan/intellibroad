@@ -11,9 +11,7 @@ def push_events_to_database(items):
 	\t c: the sqlite3 database cursor
 	"""
 
-	db_file = "intellibroad.db"
-
-	conn = create_connection(db_file)
+	conn = create_connection(DB_FILE)
 	c = conn.cursor()
 
 	print("EXECUTING push_events_to_database")
@@ -71,11 +69,10 @@ def push_events_to_database(items):
 				print("Key " + str(e) + ' not found. Not writing event entry.')
 
 
-
-
-
 	conn.commit()
 	conn.close()
+
+	print("Committed changes and closed database connection")
 
 
 

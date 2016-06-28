@@ -1,15 +1,17 @@
+import os
+import datetime
+import httplib2
+
 import json
 import webbrowser
-
-import httplib2
 
 from apiclient import discovery
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
 
-import os
-import datetime
+import sqlite3
+from sqlite3 import Error
 
 try:
     import argparse
@@ -62,7 +64,7 @@ def get_last_update(conn):
     last_update = c.fetchall()[0][0] # for some reason the datestring is in a tuple inside a list
 
     conn.close() # close database
-    print("Closed connection")
+    print("Closed connection to database")
     print("Latest updated event was " + str(last_update))
     return last_update
 
