@@ -103,28 +103,30 @@ def update_calendars(admin_service, calendar_service):
 
     return added_room_emails
 
-def pull_calendar_events(calendar_service, calendarId, timeMax=datetime.datetime.now().isoformat('T')):
+def pull_calendar_events(calendar_service, calendarId):
     """
-    Pulls all events from one calendar. Returns list of events from API call ('items' field)\n
+    Pulls all events from one calendar. Returns list of events from API call ('items' field). Attempts to use updatedMin to only pull events since last updated\n
     calendar_service: resource object for Calendar API
     calendarId: email address for specific room calendar
-    timeMax: Timestring for upper bound of item start time (to prevent pulling distant-future events)
     """
 
-    # FIELD STRING: Edit to determine what is returned by API 
+    # Edit to set the upper bound for start times for which events should be returned.
+    # This prevents us from pulling events in the distant future, for which there are no invitees save the organizer.
+    timeMax = (datetime.datetime.now() + datetime.timedelta(days=14)).isoformat('T')
+
+    # Edit to determine what is returned by API 
     fieldString = "items(attendees(displayName,email,optional,resource,responseStatus),creator(displayName,email),description,htmlLink,id,location,organizer(displayName,email),start/dateTime,status,summary,updated),nextPageToken"
 
-    # TIME STRING: Edit to determine the upper bound of event start time that should be fetched
+    # Edit to determine the upper bound of event start time that should be fetched
     timeString = timeMax + 'z' # for some reason the Google APIs really need that 'z'
 
-    # NOTE: Pulling events since last update time will be implemented later!
-
+    lastUpdated = get_last_update() # We know the last pull was later than the most recently-updated event in the database.
     eventList = [] # List of events returned by API.
     nextPageToken = ""
     while True:
         print("------NEW REQUEST------")
 
-        response = calendar_service.events().list(calendarId=calendarId, orderBy="updated", pageToken = nextPageToken, timeMax=timeString,fields = fieldString).execute()
+        response = calendar_service.events().list(calendarId=calendarId, updatedMin=lastUpdated,orderBy="updated", pageToken = nextPageToken, timeMax=timeString, fields = fieldString).execute()
         if 'items' in response:
             eventList += response['items'] # if the response has events, add them
 
@@ -137,7 +139,6 @@ def pull_calendar_events(calendar_service, calendarId, timeMax=datetime.datetime
             nextPageToken = response['nextPageToken'] # Otherwise, make another request for next page
 
     return eventList
-
 
 
 """DATABASE-RELATED METHODS"""
@@ -173,7 +174,7 @@ def create_tables():
 	print("Commited changes and closed connection to database")
 
 def get_last_update():
-    """Returns the most recent timestring at which an event in the database was updated
+    """Returns the most recent timestring at which an event in the database was updated, or None if the database is empty.
     """
     conn = create_connection(DB_FILE)
 
@@ -218,7 +219,7 @@ def push_events_to_database(items):
 
 			executeString = executeString[:-1] # clip the last comma
 			executeString += ');' # close parens
-			print("executeString: " + executeString)
+			# print("executeString: " + executeString)
 
 			c.execute(executeString, args)
 
@@ -242,12 +243,16 @@ def push_events_to_database(items):
 						write_employees(attendee['email'], attendee['displayName'])
 						write_invitations(item['id'], attendee['email'], attendee['responseStatus'])
 					except KeyError, e:
-						print('Key ' + str(e) + ' not found. Not writing person and invitation entry.')
+						# print('Key ' + str(e) + ' not found. Not writing person and invitation entry.')
 						# print(item)
 
+						# Now, if we don't have a displayName for a person, we use their email.
+						write_employees(attendee['email'], attendee['email'])
+						write_invitations(item['id'], attendee['email'], attendee['responseStatus'])
 
 			except KeyError, e:
 				print("Key " + str(e) + ' not found. Not writing event entry.')
+				print(item)
 
 
 	conn.commit()
