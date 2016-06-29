@@ -24,25 +24,26 @@ try:
 except ImportError:
     flags = None
 
-CREDENTIALS_DIR = "/Users/alee/Documents/secret"
-CLIENT_SECRET_FILE = 'client_secret.json'
-CREDENTIALS_FILE = 'credentials.json'
-DB_FILE = 'intellibroad.db'
-APPLICATION_NAME = 'IntelliBroad'
-
+# credentials_dir = "/Users/alee/Documents/secret"
+# client_secret_file = 'client_secret.json'
+# credentials_file = 'credentials.json'
+# db_file = 'intellibroad.db'
 
 """API-RELATED METHODS"""
 
-def create_api_service(): 
-    """Fetches or creates credentials, initializes resource objects Google Apps Admin SDK and Google Calendar API resource 
-        returns tuple of resource objects: (Admin SDK Object, Calendar API Object)
+def create_api_service(credentials_dir, client_secret_file, credentials_file): 
+    """Fetches or creates credentials, initializes resource objects Google Apps Admin SDK and Google Calendar API resource returns tuple of resource objects: (Admin SDK Object, Calendar API Object)
+    \n
+    credentials_dir: string, path to directory where credential and client secret files reside
+    client_secret_file: string, name of client secret file
+    credentials_file: string, name of credentials file
     """
-    credentials_path = os.path.join(CREDENTIALS_DIR, CREDENTIALS_FILE)
+    credentials_path = os.path.join(credentials_dir, credentials_file)
     store = oauth2client.file.Storage(credentials_path)
     credentials = store.locked_get()
 
     if not credentials or credentials.invalid:
-        client_secret_path = os.path.join(CREDENTIALS_DIR, CLIENT_SECRET_FILE)
+        client_secret_path = os.path.join(credentials_dir, client_secret_file)
         flow = client.flow_from_clientsecrets(client_secret_path, 
             scope='https://www.googleapis.com/auth/admin.directory.resource.calendar https://www.googleapis.com/auth/calendar',
             redirect_uri='urn:ietf:wg:oauth:2.0:oob')
@@ -103,11 +104,12 @@ def update_calendars(admin_service, calendar_service):
 
     return added_room_emails
 
-def pull_calendar_events(calendar_service, calendarId):
+def pull_calendar_events(calendar_service, calendarId, lastUpdated):
     """
     Pulls all events from one calendar. Returns list of events from API call ('items' field). Attempts to use updatedMin to only pull events since last updated\n
     calendar_service: resource object for Calendar API
     calendarId: email address for specific room calendar
+    lastUpdated: Time of previous update, in RFC 3339 timestring format (per Google API requirements)
     """
 
     # Edit to set the upper bound for start times for which events should be returned.
@@ -120,7 +122,6 @@ def pull_calendar_events(calendar_service, calendarId):
     # Edit to determine the upper bound of event start time that should be fetched
     timeString = timeMax + 'z' # for some reason the Google APIs really need that 'z'
 
-    lastUpdated = get_last_update() # We know the last pull was later than the most recently-updated event in the database.
     eventList = [] # List of events returned by API.
     nextPageToken = ""
     while True:
@@ -143,21 +144,19 @@ def pull_calendar_events(calendar_service, calendarId):
 
 """DATABASE-RELATED METHODS"""
 
-def create_connection(db_path):
+def create_connection(db_file):
 	"""Creates and returns a database connection to a SQLite database\n
-	db_path: path to database"""
-	try:
-		conn = sqlite3.connect(db_path)
-		print("Created connection with " + db_path)
-		return conn
-	except Error as e:
-		print(e)
-	return None 
+	db_file: string, database location"""
+	conn = sqlite3.connect(db_file)
+	print("Created connection with " + db_file)
+	return conn
 
-def create_tables():
-	"""Creates tables if they don't already exist"""
+def create_tables(db_file):
+	"""Creates tables if they don't already exist\n
+    db_file: string, database location
+    """
 
-	conn = create_connection(DB_FILE)
+	conn = create_connection(db_file)
 	c = conn.cursor()
 
 	# Gonna start by hardcoding in the three tables we want.
@@ -169,14 +168,14 @@ def create_tables():
 	print("Tables written successfully")
 
 	conn.commit()
-	conn.close()
+	conn.close() 
 
 	print("Commited changes and closed connection to database")
 
-def get_last_update():
-    """Returns the most recent timestring at which an event in the database was updated, or None if the database is empty.
-    """
-    conn = create_connection(DB_FILE)
+def get_last_update(db_file):
+    """Returns the most recent timestring at which an event in the database was updated, or None if the database is empty. \n
+    db_file: string, database location"""
+    conn = create_connection(db_file)
 
     c = conn.cursor()
     c.execute("SELECT max(last_update) FROM events")
@@ -188,12 +187,13 @@ def get_last_update():
     print("Latest updated event was " + str(last_update))
     return last_update
 
-def push_events_to_database(items):
+def push_events_to_database(db_file, items):
 	"""Takes calendar data and writes each event's details to database. \n
-	\t items: List of events returned by API call 
+    db_file: string, database location
+	items: List of events returned by API call 
 	"""
 
-	conn = create_connection(DB_FILE)
+	conn = create_connection(db_file)
 	c = conn.cursor()
 
 	print("EXECUTING push_events_to_database")
@@ -211,8 +211,7 @@ def push_events_to_database(items):
 
 			executeString = 'INSERT OR IGNORE INTO %s VALUES (' % table_name
 
-			for i in range(0, num_columns):
-				executeString += '?,'
+			executeString += ''.join(["?," * num_columns])
 			# so the goal here is to build the command string with the placeholders, 
 			# e.g. INSERT INTO <name> VALUES (?, ?, ?)
 			# and then insert the tuple of values via sqlite3 parameter substitution
