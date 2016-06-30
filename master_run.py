@@ -1,14 +1,29 @@
-from master import *
 import datetime
+import argparse
+from oauth2client import tools
+
+parser = argparse.ArgumentParser(parents=[tools.argparser], description='Runs the methods in master.py. \nWill soon do one whole update cycle.')
+# we need to add the oauth2 argparser in order for it to play game with our own
+parser.add_argument('-db', help='database file path', default="intellibroad.db")
+parser.add_argument('--cred_dir', help='credentials directory', default='/Users/alee/Documents/secret')
+parser.add_argument('--secret', help='secrets file', default='client_secret.json')
+parser.add_argument('--credentials', help='credentials file', default='credentials.json')
+
+args = parser.parse_args()
+
+print("####ARGS####")
+print(args)
+
+from master import *
 
 """TIMING"""
 start = datetime.datetime.now()
 """"""""""""
 
-credentials_dir = "/Users/alee/Documents/secret"
-client_secret_file = 'client_secret.json'
-credentials_file = 'credentials.json'
-db_file = 'intellibroad.db'
+credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
+client_secret_file = args.secret # 'client_secret.json'
+credentials_file = args.credentials # 'credentials.json'
+db_file = args.db # 'intellibroad.db'
 
 
 
@@ -20,10 +35,13 @@ calendarList = update_calendars(admin, calendar)
 
 eventList = []
 
-# for i in calendarList:
-# 	eventList += pull_calendar_events(calendar, i)
-lastUpdated = get_last_update(db_file)
-eventList = pull_calendar_events(calendar, calendarList[0], lastUpdated)
+
+
+# eventList = pull_calendar_events(calendar, calendarList[0], lastUpdated)
+for i in calendarList:
+	lastUpdated = get_last_update(db_file, i['name'])
+	print(i['name'] + ' last updated: ' + lastUpdated)
+	eventList += pull_calendar_events(calendar, i['id'], lastUpdated)
 
 print(len(eventList))
 
