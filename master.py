@@ -18,11 +18,11 @@ import sqlite3
 from sqlite3 import Error
 
 
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
+# try:
+#     import argparse
+#     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+# except ImportError:
+#     flags = None
 
 # credentials_dir = "/Users/alee/Documents/secret"
 # client_secret_file = 'client_secret.json'
@@ -65,7 +65,7 @@ def create_api_service(credentials_dir, client_secret_file, credentials_file):
 
 def update_calendars(admin_service, calendar_service):
     """Gets room email addresses from Google Apps Admin SDK, and adds them to own list of calendars.
-        Returns a list containing the email addresses that were successfully added.
+        Returns a list of dicts (keys: 'id', 'name') for calendars that were successfully added.
 
         admin_service and calendar_service are the resource objects for their respective APIs
     """
@@ -84,7 +84,7 @@ def update_calendars(admin_service, calendar_service):
 
     print("Begin adding calendars to list")
 
-    added_room_emails = [] # the list of calendar emails that were successfully added, that we will be puliing data from
+    added_rooms = [] # the list of calendar that were successfully added, that we will be puliing data from
 
     for i in conference_room_emails:
         request_body = {
@@ -94,15 +94,14 @@ def update_calendars(admin_service, calendar_service):
         outputString = "add success \t"
         try:
             calendar_service.calendarList().insert(body = request_body).execute()
-            added_room_emails.append(i['id'])
+            added_rooms.append(i)
         except Exception, e:
-            # print(e)
             # some of the calendars we don't have access to, API returns 404 errors when we attempt to add
-            outputString = "\033[1m*404 error* \033[0m\t"
+            outputString = "\033[1m*" + str(e.resp.status) + " error* \033[0m\t"
         outputString += i["name"]
         print(outputString)
 
-    return added_room_emails
+    return added_rooms
 
 def pull_calendar_events(calendar_service, calendarId, lastUpdated):
     """
@@ -172,13 +171,14 @@ def create_tables(db_file):
 
 	print("Commited changes and closed connection to database")
 
-def get_last_update(db_file):
+def get_last_update(db_file, name):
     """Returns the most recent timestring at which an event in the database was updated, or None if the database is empty. \n
-    db_file: string, database location"""
+    db_file: string, database location
+    name: string, name of calendar"""
     conn = create_connection(db_file)
 
     c = conn.cursor()
-    c.execute("SELECT max(last_update) FROM events")
+    c.execute("SELECT max(last_update) FROM events WHERE location = ?", (name,))
 
     last_update = c.fetchall()[0][0] # for some reason the datestring is in a tuple inside a list
 
@@ -251,7 +251,7 @@ def push_events_to_database(db_file, items):
 
 			except KeyError, e:
 				print("Key " + str(e) + ' not found. Not writing event entry.')
-				print(item)
+				# print(item)
 
 
 	conn.commit()
