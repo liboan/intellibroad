@@ -32,113 +32,113 @@ from sqlite3 import Error
 """API-RELATED METHODS"""
 
 def create_api_service(credentials_dir, client_secret_file, credentials_file): 
-    """Fetches or creates credentials, initializes resource objects Google Apps Admin SDK and Google Calendar API resource returns tuple of resource objects: (Admin SDK Object, Calendar API Object)
-    \n
-    credentials_dir: string, path to directory where credential and client secret files reside
-    client_secret_file: string, name of client secret file
-    credentials_file: string, name of credentials file
-    """
-    credentials_path = os.path.join(credentials_dir, credentials_file)
-    store = oauth2client.file.Storage(credentials_path)
-    credentials = store.locked_get()
+	"""Fetches or creates credentials, initializes resource objects Google Apps Admin SDK and Google Calendar API resource returns tuple of resource objects: (Admin SDK Object, Calendar API Object)
+	\n
+	credentials_dir: string, path to directory where credential and client secret files reside
+	client_secret_file: string, name of client secret file
+	credentials_file: string, name of credentials file
+	"""
+	credentials_path = os.path.join(credentials_dir, credentials_file)
+	store = oauth2client.file.Storage(credentials_path)
+	credentials = store.locked_get()
 
-    if not credentials or credentials.invalid:
-        client_secret_path = os.path.join(credentials_dir, client_secret_file)
-        flow = client.flow_from_clientsecrets(client_secret_path, 
-            scope='https://www.googleapis.com/auth/admin.directory.resource.calendar https://www.googleapis.com/auth/calendar',
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+	if not credentials or credentials.invalid:
+		client_secret_path = os.path.join(credentials_dir, client_secret_file)
+		flow = client.flow_from_clientsecrets(client_secret_path, 
+			scope='https://www.googleapis.com/auth/admin.directory.resource.calendar https://www.googleapis.com/auth/calendar',
+			redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
+		if flags:
+			credentials = tools.run_flow(flow, store, flags)
+		else: # Needed only for compatibility with Python 2.6
+			credentials = tools.run(flow, store)
 
-        print("Storing credentials to: " + credentials_path)
+		print("Storing credentials to: " + credentials_path)
 
-    http_auth = credentials.authorize(httplib2.Http())
+	http_auth = credentials.authorize(httplib2.Http())
 
-    calendar_service = discovery.build("calendar", "v3", http = http_auth)
+	calendar_service = discovery.build("calendar", "v3", http = http_auth)
 
-    admin_service = discovery.build('admin', 'directory_v1', http = http_auth) # NOTE: Different service 
+	admin_service = discovery.build('admin', 'directory_v1', http = http_auth) # NOTE: Different service 
 
-    return (admin_service, calendar_service)
+	return (admin_service, calendar_service)
 
 def update_calendars(admin_service, calendar_service):
-    """Gets room email addresses from Google Apps Admin SDK, and adds them to own list of calendars.
-        Returns a list of dicts (keys: 'id', 'name') for calendars that were successfully added.
+	"""Gets room email addresses from Google Apps Admin SDK, and adds them to own list of calendars.
+		Returns a list of dicts (keys: 'id', 'name') for calendars that were successfully added.
 
-        admin_service and calendar_service are the resource objects for their respective APIs
-    """
+		admin_service and calendar_service are the resource objects for their respective APIs
+	"""
 
-    calendarListResource = admin_service.resources().calendars().list(customer="my_customer").execute()
+	calendarListResource = admin_service.resources().calendars().list(customer="my_customer").execute()
 
-    print("Requesting list of resources from Google Apps Admin SDK")
+	print("Requesting list of resources from Google Apps Admin SDK")
 
-    conference_room_emails = [] # list containing all room emails and names
+	conference_room_emails = [] # list containing all room emails and names
 
-    for calendar in calendarListResource["items"]:
-        if calendar["resourceType"] == "Conference Room":
-            conference_room_emails.append({"id": calendar["resourceEmail"],"name": calendar["resourceName"]})
+	for calendar in calendarListResource["items"]:
+		if calendar["resourceType"] == "Conference Room":
+			conference_room_emails.append({"id": calendar["resourceEmail"],"name": calendar["resourceName"]})
 
-    # print(json.dumps(conference_room_emails, indent=4, separators=(',', ':')))
+	# print(json.dumps(conference_room_emails, indent=4, separators=(',', ':')))
 
-    print("Begin adding calendars to list")
+	print("Begin adding calendars to list")
 
-    added_rooms = [] # the list of calendar that were successfully added, that we will be puliing data from
+	added_rooms = [] # the list of calendar that were successfully added, that we will be puliing data from
 
-    for i in conference_room_emails:
-        request_body = {
-            'id': i["id"]
-        }
+	for i in conference_room_emails:
+		request_body = {
+			'id': i["id"]
+		}
 
-        outputString = "add success \t"
-        try:
-            calendar_service.calendarList().insert(body = request_body).execute()
-            added_rooms.append(i)
-        except Exception, e:
-            # some of the calendars we don't have access to, API returns 404 errors when we attempt to add
-            outputString = "\033[1m*" + str(e.resp.status) + " error* \033[0m\t"
-        outputString += i["name"]
-        print(outputString)
+		outputString = "add success \t"
+		try:
+			calendar_service.calendarList().insert(body = request_body).execute()
+			added_rooms.append(i)
+		except Exception, e:
+			# some of the calendars we don't have access to, API returns 404 errors when we attempt to add
+			outputString = "\033[1m*" + str(e.resp.status) + " error* \033[0m\t"
+		outputString += i["name"]
+		print(outputString)
 
-    return added_rooms
+	return added_rooms
 
 def pull_calendar_events(calendar_service, calendarId, lastUpdated):
-    """
-    Pulls all events from one calendar. Returns list of events from API call ('items' field). Attempts to use updatedMin to only pull events since last updated\n
-    calendar_service: resource object for Calendar API
-    calendarId: email address for specific room calendar
-    lastUpdated: Time of previous update, in RFC 3339 timestring format (per Google API requirements)
-    """
+	"""
+	Pulls all events from one calendar. Returns list of events from API call ('items' field). Attempts to use updatedMin to only pull events since last updated\n
+	calendar_service: resource object for Calendar API
+	calendarId: email address for specific room calendar
+	lastUpdated: Time of previous update, in RFC 3339 timestring format (per Google API requirements)
+	"""
 
-    # Edit to set the upper bound for start times for which events should be returned.
-    # This prevents us from pulling events in the distant future, for which there are no invitees save the organizer.
-    timeMax = (datetime.datetime.now() + datetime.timedelta(days=14)).isoformat('T')
+	# Edit to set the upper bound for start times for which events should be returned.
+	# This prevents us from pulling events in the distant future, for which there are no invitees save the organizer.
+	timeMax = (datetime.datetime.now() + datetime.timedelta(days=14)).isoformat('T')
 
-    # Edit to determine what is returned by API 
-    fieldString = "items(attendees(displayName,email,optional,resource,responseStatus),creator(displayName,email),description,htmlLink,id,location,organizer(displayName,email),start/dateTime,status,summary,updated),nextPageToken"
+	# Edit to determine what is returned by API 
+	fieldString = """items(attendees(displayName,email,optional,resource,responseStatus),creator(displayName,email),description,htmlLink,id,location,organizer(displayName,email),recurrence,start/dateTime,status,summary,updated),nextPageToken"""
 
-    # Edit to determine the upper bound of event start time that should be fetched
-    timeString = timeMax + 'z' # for some reason the Google APIs really need that 'z'
+	# Edit to determine the upper bound of event start time that should be fetched
+	timeString = timeMax + 'z' # for some reason the Google APIs really need that 'z'
 
-    eventList = [] # List of events returned by API.
-    nextPageToken = ""
-    while True:
-        print("------NEW REQUEST------")
+	eventList = [] # List of events returned by API.
+	nextPageToken = ""
+	while True:
+		print("------NEW REQUEST------")
 
-        response = calendar_service.events().list(calendarId=calendarId, updatedMin=lastUpdated,orderBy="updated", pageToken = nextPageToken, timeMax=timeString, fields = fieldString).execute()
-        if 'items' in response:
-            eventList += response['items'] # if the response has events, add them
+		response = calendar_service.events().list(calendarId=calendarId, updatedMin=lastUpdated,orderBy="updated", pageToken = nextPageToken, timeMax=timeString, fields = fieldString).execute()
+		if 'items' in response:
+			eventList += response['items'] # if the response has events, add them
 
-        if "nextPageToken" not in response:
-            print("DONE")
-            break 
-            # If there's no nextPageToken in response body, we break out and return what we have
-        else:
-            print("NEXT PAGE TOKEN: " + response['nextPageToken'])
-            nextPageToken = response['nextPageToken'] # Otherwise, make another request for next page
+		if "nextPageToken" not in response:
+			print("DONE")
+			break 
+			# If there's no nextPageToken in response body, we break out and return what we have
+		else:
+			print("NEXT PAGE TOKEN: " + response['nextPageToken'])
+			nextPageToken = response['nextPageToken'] # Otherwise, make another request for next page
 
-    return eventList
+	return eventList
 
 
 """DATABASE-RELATED METHODS"""
@@ -152,15 +152,15 @@ def create_connection(db_file):
 
 def create_tables(db_file):
 	"""Creates tables if they don't already exist\n
-    db_file: string, database location
-    """
+	db_file: string, database location
+	"""
 
 	conn = create_connection(db_file)
 	c = conn.cursor()
 
 	# Gonna start by hardcoding in the three tables we want.
 
-	c.execute("CREATE TABLE IF NOT EXISTS events ( event_id text PRIMARY KEY, name text, start_time text, location text, last_update text )")
+	c.execute("CREATE TABLE IF NOT EXISTS events ( event_id text PRIMARY KEY, name text, description text, start_time text, recurrence text, location text, last_update text, htmlLink text)")
 	c.execute("CREATE TABLE IF NOT EXISTS employees ( employee_id text PRIMARY KEY, name text )")
 	c.execute("CREATE TABLE IF NOT EXISTS invitations ( event_id text, employee_id text, response text)")
 
@@ -172,24 +172,24 @@ def create_tables(db_file):
 	print("Commited changes and closed connection to database")
 
 def get_last_update(db_file, name):
-    """Returns the most recent timestring at which an event in the database was updated, or None if the database is empty. \n
-    db_file: string, database location
-    name: string, name of calendar"""
-    conn = create_connection(db_file)
+	"""Returns the most recent timestring at which an event in the database was updated, or None if the database is empty. \n
+	db_file: string, database location
+	name: string, name of calendar"""
+	conn = create_connection(db_file)
 
-    c = conn.cursor()
-    c.execute("SELECT max(last_update) FROM events WHERE location = ?", (name,))
+	c = conn.cursor()
+	c.execute("SELECT max(last_update) FROM events WHERE location = ?", (name,))
 
-    last_update = c.fetchall()[0][0] # for some reason the datestring is in a tuple inside a list
+	last_update = c.fetchall()[0][0] # for some reason the datestring is in a tuple inside a list
 
-    conn.close() # close database
-    print("Closed connection to database")
-    print("Latest updated event was " + str(last_update))
-    return last_update
+	conn.close() # close database
+	print("Closed connection to database")
+	print("Latest updated event was " + str(last_update))
+	return last_update
 
 def push_events_to_database(db_file, items):
 	"""Takes calendar data and writes each event's details to database. \n
-    db_file: string, database location
+	db_file: string, database location
 	items: List of events returned by API call 
 	"""
 
@@ -211,47 +211,57 @@ def push_events_to_database(db_file, items):
 
 			executeString = 'INSERT OR IGNORE INTO %s VALUES (' % table_name
 
-			executeString += ''.join(["?," * num_columns])
+			executeString += ','.join(["?"] * num_columns)
 			# so the goal here is to build the command string with the placeholders, 
 			# e.g. INSERT INTO <name> VALUES (?, ?, ?)
 			# and then insert the tuple of values via sqlite3 parameter substitution
 
-			executeString = executeString[:-1] # clip the last comma
+			# executeString = executeString[:-1] # clip the last comma
 			executeString += ');' # close parens
-			# print("executeString: " + executeString)
+			print("executeString: " + executeString)
 
 			c.execute(executeString, args)
 
 		return write_row
-
-
-	# need some help with abstraction!!!!
-
-	write_events = make_row_writer(c, 'events', 5)
+	
+	write_events = make_row_writer(c, 'events', 8)
 	write_employees = make_row_writer(c, 'employees', 2)
 	write_invitations = make_row_writer(c, 'invitations', 3)
 
 	for item in items:
-		if item['status'] != 'cancelled':
-			# print(json.dumps(item, indent=4, separators=(':',',')))
-			try:
-				write_events(item['id'], item['summary'], item['start']['dateTime'], item['location'], item['updated'])
+		if item['status'] != 'cancelled' and 'attendees' in item and 'summary' in item and 'start' in item:
+			# we don't want cancelled events, we don't want private events for which we can't see
+			# attendees, we don't want events without start times (because what would those be anyways)
 
-				for attendee in item['attendees']:
-					try:		
-						write_employees(attendee['email'], attendee['displayName'])
-						write_invitations(item['id'], attendee['email'], attendee['responseStatus'])
-					except KeyError, e:
-						# print('Key ' + str(e) + ' not found. Not writing person and invitation entry.')
-						# print(item)
+			event_values = []
 
-						# Now, if we don't have a displayName for a person, we use their email.
-						write_employees(attendee['email'], attendee['email'])
-						write_invitations(item['id'], attendee['email'], attendee['responseStatus'])
+			# MAKE SURE THESE MATCH THE ORDER OF THE event TABLE COLUMNS!!!
+			# Some fields will get a space if they do not exist
 
-			except KeyError, e:
-				print("Key " + str(e) + ' not found. Not writing event entry.')
-				# print(item)
+			event_values.append(item['id']) # should always be in
+			event_values.append(item['summary']) # should always be in
+			event_values.append(item['description'] if 'description' in item else '')
+			event_values.append(item['start']['dateTime']) # should always be in
+			event_values.append(' '.join(item['recurrence']) if 'recurrence' in item else '') # spaces separate each string
+			event_values.append(item['location'] if 'location' in item else '')
+			event_values.append(item['updated']) # should always be in
+			event_values.append(item['htmlLink'] if 'htmlLink' in item else '')
+
+			if not '_' in event_values[0]:
+				# Underscores (with datestamp following) denote recurring instances of an event.
+				# We don't add those.
+				write_events(*event_values) # 'splats' those event values into individual arguments
+
+			# Now we add employees and invitations. If no screen name, use their email instead.
+
+			for attendee in item['attendees']:
+				if 'displayName' not in attendee:
+					write_employees(attendee['email'], attendee['email'])
+					write_invitations(item['id'], attendee['email'], attendee['responseStatus'])
+				else:
+					write_employees(attendee['email'], attendee['displayName'])
+					write_invitations(item['id'], attendee['email'], attendee['responseStatus'])		
+
 
 
 	conn.commit()
