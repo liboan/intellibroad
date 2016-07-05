@@ -4,5 +4,7 @@
 *.db
 *.db-journal
 .gitignore~
-*.ipynb
+/test/*.ipynb
+/test/.ipynb_checkpoints
+/.ipynb_checkpoints
 /test/master_test.py
