@@ -216,9 +216,7 @@ def push_events_to_database(db_file, items):
 			# e.g. INSERT INTO <name> VALUES (?, ?, ?)
 			# and then insert the tuple of values via sqlite3 parameter substitution
 
-			# executeString = executeString[:-1] # clip the last comma
 			executeString += ');' # close parens
-			print("executeString: " + executeString)
 
 			c.execute(executeString, args)
 
@@ -233,35 +231,32 @@ def push_events_to_database(db_file, items):
 			# we don't want cancelled events, we don't want private events for which we can't see
 			# attendees, we don't want events without start times (because what would those be anyways)
 
-			event_values = []
+			# IDs of recurring instances have an _ after them with a timestamp. Removing that makes 
+			# all recurrences have identical IDs. The database will only accept the first one added,
+			# and will ignore all others.
+			item['id'] = item['id'].split('_')[0]
 
 			# MAKE SURE THESE MATCH THE ORDER OF THE event TABLE COLUMNS!!!
-			# Some fields will get a space if they do not exist
+			# Fields will get a space if they do not exist
 
-			event_values.append(item['id']) # should always be in
-			event_values.append(item['summary']) # should always be in
-			event_values.append(item['description'] if 'description' in item else '')
-			event_values.append(item['start']['dateTime']) # should always be in
-			event_values.append(' '.join(item['recurrence']) if 'recurrence' in item else '') # spaces separate each string
-			event_values.append(item['location'] if 'location' in item else '')
-			event_values.append(item['updated']) # should always be in
-			event_values.append(item['htmlLink'] if 'htmlLink' in item else '')
+			event_values = [
+				item.get('id', ''),
+				item.get('summary', ''), 
+				item.get('description', ''), 
+				item.get('start').get('dateTime', ''), 
+				' '.join(item.get('recurrence', '')), 
+				item.get('location', ''), 
+				item.get('updated', ''), 
+				item.get('htmlLink', '')
+			]
 
-			if not '_' in event_values[0]:
-				# Underscores (with datestamp following) denote recurring instances of an event.
-				# We don't add those.
-				write_events(*event_values) # 'splats' those event values into individual arguments
+			write_events(*event_values)
 
 			# Now we add employees and invitations. If no screen name, use their email instead.
 
 			for attendee in item['attendees']:
-				if 'displayName' not in attendee:
-					write_employees(attendee['email'], attendee['email'])
-					write_invitations(item['id'], attendee['email'], attendee['responseStatus'])
-				else:
-					write_employees(attendee['email'], attendee['displayName'])
-					write_invitations(item['id'], attendee['email'], attendee['responseStatus'])		
-
+				write_employees(attendee['email'], attendee.get('displayName', attendee['email']))
+				write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
 
 
 	conn.commit()
