@@ -65,7 +65,7 @@ def create_api_service(credentials_dir, client_secret_file, credentials_file):
 
 def update_calendars(admin_service, calendar_service):
 	"""Gets room email addresses from Google Apps Admin SDK, and adds them to own list of calendars.
-		Returns a list of dicts (keys: 'id', 'name') for calendars that were successfully added.
+		Returns a list of dicts (keys: 'id', 'summary') for calendars that were successfully added.
 
 		admin_service and calendar_service are the resource objects for their respective APIs
 	"""
@@ -76,15 +76,12 @@ def update_calendars(admin_service, calendar_service):
 
 	conference_room_emails = [] # list containing all room emails and names
 
+	# First, we add all conference rooms from the API
 	for calendar in calendarListResource["items"]:
 		if calendar["resourceType"] == "Conference Room":
-			conference_room_emails.append({"id": calendar["resourceEmail"],"name": calendar["resourceName"]})
+			conference_room_emails.append({"id": calendar["resourceEmail"],"summary": calendar["resourceName"]})
 
-	# print(json.dumps(conference_room_emails, indent=4, separators=(',', ':')))
-
-	print("Begin adding calendars to list")
-
-	added_rooms = [] # the list of calendar that were successfully added, that we will be puliing data from
+	print("Getting and adding new calendars from Admin API...")
 
 	for i in conference_room_emails:
 		request_body = {
@@ -97,9 +94,20 @@ def update_calendars(admin_service, calendar_service):
 			added_rooms.append(i)
 		except Exception, e:
 			# some of the calendars we don't have access to, API returns 404 errors when we attempt to add
-			outputString = "\033[1m*" + str(e.resp.status) + " error* \033[0m\t"
-		outputString += i["name"]
-		print(outputString)
+			outputString = "\033[1m*" + str(e) + " error* \033[0m\t"
+		outputString += i["summary"]
+		# print(outputString)
+
+	print("LIST OF ADDED CALENDARS:")
+
+	listFromApi = calendar_service.calendarList().list(showHidden=True,fields='items(id,summary),nextPageToken').execute()['items']
+
+	added_rooms = [] # rooms that have been added, we will be pulling from these
+
+	for i in listFromApi:
+		if 'resource.calendar.google.com' in i['id']:
+			print(i['summary'])
+			added_rooms.append(i)
 
 	return added_rooms
 
@@ -176,7 +184,6 @@ def get_last_update(db_file, name):
 	db_file: string, database location
 	name: string, name of calendar"""
 	conn = create_connection(db_file)
-
 	c = conn.cursor()
 	c.execute("SELECT max(last_update) FROM events WHERE location = ?", (name,))
 
