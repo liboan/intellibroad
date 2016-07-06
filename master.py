@@ -170,7 +170,7 @@ def create_tables(db_file):
 
 	c.execute("CREATE TABLE IF NOT EXISTS events ( event_id text PRIMARY KEY, name text, description text, start_time text, recurrence text, location text, last_update text, htmlLink text)")
 	c.execute("CREATE TABLE IF NOT EXISTS employees ( employee_id text PRIMARY KEY, name text )")
-	c.execute("CREATE TABLE IF NOT EXISTS invitations ( event_id text, employee_id text, response text)")
+	c.execute("CREATE TABLE IF NOT EXISTS invitations ( event_id text, employee_id text, response text, UNIQUE (event_id, employee_id))")
 
 	print("Tables written successfully")
 
@@ -270,5 +270,56 @@ def push_events_to_database(db_file, items):
 	conn.close()
 
 	print("Committed changes and closed database connection")
+
+"""HASHING"""
+
+def hash_event(attendees):
+	"""Create a hash of an event based on its attendees. 
+	Returns an integer, the result of the hash. \n
+	attendees: List of strings to hash, should be employee_ids
+	"""
+	event_hash = 0 # Start out with an empty bitstring
+
+	for i in attendees:
+		index = hash(i) # We hash every ID to get a unique, random integer
+		print(bin(index))
+		event_hash |= (1 << index % 32) 
+		# Inside the parentheses essentially tells us which position in a chunk of 32 the event
+		# hash would take (bc we're essentially dividing by 32, which in the 'large bitstring')
+		# setup means pulling down chunks of 32 until the bit is at the last chunk
+	print(bin(event_hash))
+	return event_hash
+
+def create_event_hashes(db_file):
+	"""Creates a table with columns for event_id and hash. The hash is created based off of attendees.\n
+	db_file: String, path to database
+	"""
+	conn = create_connection(db_file)
+	conn.row_factory = lambda cursor, row: row[0] # returns first element from each row
+	c = conn.cursor()
+
+	# Create the table if it ain't there yet
+	c.execute("CREATE TABLE IF NOT EXISTS event_hashes (event_id text PRIMARY KEY, hash integer)")
+
+	# Get all events that are not already in event_hashes
+	queryString = """SELECT event_id FROM events EXCEPT SELECT event_id FROM event_hashes"""
+	c.execute(queryString)
+	eventList = c.fetchall()
+
+	print eventList
+	
+	for i in eventList:
+		c.execute('SELECT employee_id FROM invitations WHERE event_id = ?', (i,))
+		event_hash = hash_event(c.fetchall())
+		c.execute('INSERT INTO event_hashes VALUES (?,?)', (i, event_hash))
+
+
+	conn.commit()
+	conn.close()
+
+	# return employee_list
+
+
+
 
 
