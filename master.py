@@ -133,8 +133,10 @@ def pull_calendar_events(calendar_service, calendarId, lastUpdated):
 	nextPageToken = ""
 	while True:
 		print("------NEW REQUEST------")
-
-		response = calendar_service.events().list(calendarId=calendarId, updatedMin=lastUpdated,orderBy="updated", pageToken = nextPageToken, timeMax=timeString, fields = fieldString).execute()
+		try:
+			response = calendar_service.events().list(calendarId=calendarId, updatedMin=lastUpdated,orderBy="updated", pageToken = nextPageToken, timeMax=timeString, fields = fieldString).execute()
+		except Exception, e:
+			raise e
 		if 'items' in response:
 			eventList += response['items'] # if the response has events, add them
 
@@ -172,20 +174,23 @@ def create_tables(db_file):
 	c.execute("CREATE TABLE IF NOT EXISTS employees ( employee_id text PRIMARY KEY, name text )")
 	c.execute("CREATE TABLE IF NOT EXISTS invitations ( event_id text, employee_id text, response text, UNIQUE (event_id, employee_id))")
 
-	print("Tables written successfully")
-
 	conn.commit()
 	conn.close() 
 
-	print("Commited changes and closed connection to database")
 
-def get_last_update(db_file, name):
-	"""Returns the most recent timestring at which an event in the database was updated, or None if the database is empty. \n
+def get_last_update(db_file, cal_id):
+	"""Returns the most recent timestring at which an event in the given calendar was updated in the database, or None if the database is empty. \n
 	db_file: string, database location
-	name: string, name of calendar"""
+	cal_id: string, email address of calendar"""
 	conn = create_connection(db_file)
 	c = conn.cursor()
-	c.execute("SELECT max(last_update) FROM events WHERE location = ?", (name,))
+
+	queryString = """
+	SELECT max(last_update) FROM events WHERE event_id IN 
+	(SELECT event_id FROM invitations WHERE employee_id = ?)
+	"""
+
+	c.execute(queryString, (cal_id,))
 
 	last_update = c.fetchall()[0][0] # for some reason the datestring is in a tuple inside a list
 
@@ -265,6 +270,9 @@ def push_events_to_database(db_file, items):
 				write_employees(attendee['email'], attendee.get('displayName', attendee['email']))
 				write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
 
+	# Lastly, before leaving, we create the hashes for the new events.
+
+	create_event_hashes(db_file)
 
 	conn.commit()
 	conn.close()
@@ -291,7 +299,8 @@ def hash_event(attendees):
 	return event_hash
 
 def create_event_hashes(db_file):
-	"""Creates a table with columns for event_id and hash. The hash is created based off of attendees.\n
+	"""Creates a table with columns for event_id and hash. The hash is created based off of attendees. 
+	If table is already created, update the table for new events.\n
 	db_file: String, path to database
 	"""
 	conn = create_connection(db_file)

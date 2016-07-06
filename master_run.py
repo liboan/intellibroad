@@ -46,16 +46,17 @@ else:
 	calendarList = update_calendars(admin_service, calendar_service)
 
 	for i in calendarList:
-		lastUpdated = get_last_update(db_file, i['summary'])
+		lastUpdated = get_last_update(db_file, i['id'])
 
 		if args.get_all:
 			lastUpdated = None # for force grabbing all events
 
 		print(i['summary'] + ' last updated: ' + str(lastUpdated))
-		eventList += pull_calendar_events(calendar_service, i['id'], lastUpdated)
-
-print(len(eventList))
-
+		try:
+			eventList += pull_calendar_events(calendar_service, i['id'], lastUpdated)
+		except Exception, e:
+			print("lastUpdated error, pulling all events")
+			eventList += pull_calendar_events(calendar_service, i['id'], None)
 
 push_events_to_database(db_file, eventList)
 
