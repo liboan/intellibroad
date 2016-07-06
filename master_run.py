@@ -24,45 +24,65 @@ print(args)
 
 from master import *
 
-"""TIMING"""
-start = datetime.datetime.now()
-""""""""""""
+def update():
+	"""Master update function, should be called regularly to pull event data and push it to database.\n
+	Returns 0 if no error, 1 if there is an error.
+	"""
+	try:
 
-credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
-client_secret_file = args.secret # 'client_secret.json'
-credentials_file = args.credentials # 'credentials.json'
-db_file = args.db # 'intellibroad.db'
+		"""TIMING"""
+		start = datetime.datetime.now()
+		""""""""""""
 
-create_tables(db_file)
+		credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
+		client_secret_file = args.secret # 'client_secret.json'
+		credentials_file = args.credentials # 'credentials.json'
+		db_file = args.db # 'intellibroad.db'
 
-admin_service, calendar_service = create_api_service(credentials_dir, client_secret_file, credentials_file)
+		create_tables(db_file)
 
-eventList = []
+		admin_service, calendar_service = create_api_service(credentials_dir, client_secret_file, credentials_file)
 
-if args.c:
-	# if a specific calendar email is specified, pull all events from that calendar
-	eventList += pull_calendar_events(calendar_service, args.c, None)
-else:
-	calendarList = update_calendars(admin_service, calendar_service)
+		eventList = []
 
-	for i in calendarList:
-		lastUpdated = get_last_update(db_file, i['id'])
+		if args.c:
+			# if a specific calendar email is specified, pull all events from that calendar
+			eventList += pull_calendar_events(calendar_service, args.c, None)
+		else:
+			calendarList = update_calendars(admin_service, calendar_service)
 
-		if args.get_all:
-			lastUpdated = None # for force grabbing all events
+			for i in calendarList:
+				lastUpdated = get_last_update(db_file, i['id'])
 
-		print(i['summary'] + ' last updated: ' + str(lastUpdated))
-		try:
-			eventList += pull_calendar_events(calendar_service, i['id'], lastUpdated)
-		except Exception, e:
-			print("lastUpdated error, pulling all events")
-			eventList += pull_calendar_events(calendar_service, i['id'], None)
+				if args.get_all:
+					lastUpdated = None # for force grabbing all events
 
-push_events_to_database(db_file, eventList)
+				print(i['summary'] + ' last updated: ' + str(lastUpdated))
+				try:
+					eventList += pull_calendar_events(calendar_service, i['id'], lastUpdated)
+				except Exception, e:
+					print("lastUpdated error, pulling all events")
+					eventList += pull_calendar_events(calendar_service, i['id'], None)
+
+		push_events_to_database(db_file, eventList)
 
 
-"""TIMING"""
-finish = datetime.datetime.now()
-delta = finish - start
-print("TOTAL EXECUTION TIME: %d sec" % (delta.seconds))
-""""""""""""
+		"""TIMING"""
+		finish = datetime.datetime.now()
+		delta = finish - start
+		print("update() complete in %d sec" % (delta.seconds))
+		""""""""""""
+		# no error!
+		return 0
+	except Exception, e:
+		print(e)
+		"""TIMING"""
+		finish = datetime.datetime.now()
+		delta = finish - start
+		print("update() complete in %d sec" % (delta.seconds))
+		""""""""""""
+
+		
+		# error :(
+		return 1
+
