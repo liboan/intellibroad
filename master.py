@@ -270,12 +270,11 @@ def push_events_to_database(db_file, items):
 				write_employees(attendee['email'], attendee.get('displayName', attendee['email']))
 				write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
 
-	# Lastly, before leaving, we create the hashes for the new events.
-
-	create_event_hashes(db_file)
-
 	conn.commit()
 	conn.close()
+
+	# Lastly, before leaving, we create the hashes for the new events.
+	create_event_hashes(db_file)
 
 	print("Committed changes and closed database connection")
 
@@ -290,12 +289,10 @@ def hash_event(attendees):
 
 	for i in attendees:
 		index = hash(i) # We hash every ID to get a unique, random integer
-		print(bin(index))
 		event_hash |= (1 << index % 32) 
 		# Inside the parentheses essentially tells us which position in a chunk of 32 the event
 		# hash would take (bc we're essentially dividing by 32, which in the 'large bitstring')
 		# setup means pulling down chunks of 32 until the bit is at the last chunk
-	print(bin(event_hash))
 	return event_hash
 
 def create_event_hashes(db_file):
@@ -303,6 +300,8 @@ def create_event_hashes(db_file):
 	If table is already created, update the table for new events.\n
 	db_file: String, path to database
 	"""
+	print("Creating event hashes")
+
 	conn = create_connection(db_file)
 	conn.row_factory = lambda cursor, row: row[0] # returns first element from each row
 	c = conn.cursor()
@@ -314,8 +313,6 @@ def create_event_hashes(db_file):
 	queryString = """SELECT event_id FROM events EXCEPT SELECT event_id FROM event_hashes"""
 	c.execute(queryString)
 	eventList = c.fetchall()
-
-	print eventList
 	
 	for i in eventList:
 		c.execute('SELECT employee_id FROM invitations WHERE event_id = ?', (i,))
