@@ -210,18 +210,24 @@ def push_events_to_database(db_file, items):
 
 	print("EXECUTING push_events_to_database")
 
-	def make_row_writer(c, table_name, num_columns):
+	def make_row_writer(c, table_name, num_columns, replace = False):
 		"""Returns a method that writes to a specific table, taking only the correct 
 		length tuple for that table. \n
 
 		c: sqlite3 Cursor object
 		table_name: string of the name of table
 		num_columns: int, number of columns in the table
+		replace: bool, if row id already exists, replace or ignore?
 		"""
+		behaviorString = "IGNORE" 
+
+		if replace:
+			behaviorString = "REPLACE"
+
 		def write_row(*args):
 			assert len(args) == num_columns
 
-			executeString = 'INSERT OR IGNORE INTO %s VALUES (' % table_name
+			executeString = 'INSERT OR %s INTO %s VALUES (' % (behaviorString, table_name)
 
 			executeString += ','.join(["?"] * num_columns)
 			# so the goal here is to build the command string with the placeholders, 
@@ -234,8 +240,8 @@ def push_events_to_database(db_file, items):
 
 		return write_row
 	
-	write_events = make_row_writer(c, 'events', 8)
-	write_employees = make_row_writer(c, 'employees', 2)
+	write_events = make_row_writer(c, 'events', 8) # in cases of recurring events, we want the earliest to stay
+	write_employees = make_row_writer(c, 'employees', 2, replace=True) # but in case of employees, we want newest name in database
 	write_invitations = make_row_writer(c, 'invitations', 3)
 
 	for item in items:
