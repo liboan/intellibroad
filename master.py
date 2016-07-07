@@ -63,11 +63,12 @@ def create_api_service(credentials_dir, client_secret_file, credentials_file):
 
 	return (admin_service, calendar_service)
 
-def update_calendars(admin_service, calendar_service):
+def update_calendars(admin_service, calendar_service, excluded_calendars = []):
 	"""Gets room email addresses from Google Apps Admin SDK, and adds them to own list of calendars.
 		Returns a list of dicts (keys: 'id', 'summary') for calendars that were successfully added.
 
 		admin_service and calendar_service are the resource objects for their respective APIs
+		excluded_calendars: list of calendar emails which will not be pulled (place buggy/irrelevant calendars here)
 	"""
 
 	calendarListResource = admin_service.resources().calendars().list(customer="my_customer").execute()
@@ -105,7 +106,7 @@ def update_calendars(admin_service, calendar_service):
 	added_rooms = [] # rooms that have been added, we will be pulling from these
 
 	for i in listFromApi:
-		if 'resource.calendar.google.com' in i['id']:
+		if 'resource.calendar.google.com' in i['id'] and i['id'] not in excluded_calendars:
 			print(i['summary'])
 			added_rooms.append(i)
 

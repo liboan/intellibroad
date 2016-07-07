@@ -28,6 +28,11 @@ def update():
 	"""Master update function, should be called regularly to pull event data and push it to database.\n
 	Returns 0 if no error, 1 if there is an error.
 	"""
+
+	# List of excluded calendars- maybe this should be moved somewhere else
+	excludeList = ['broadinstitute.com_2d3837373534343233373531@resource.calendar.google.com']
+	# Instrument-RealTimePCR forces a full update every time, stretching out the update process.
+
 	try:
 
 		"""TIMING"""
@@ -49,7 +54,7 @@ def update():
 			# if a specific calendar email is specified, pull all events from that calendar
 			eventList += pull_calendar_events(calendar_service, args.c, None)
 		else:
-			calendarList = update_calendars(admin_service, calendar_service)
+			calendarList = update_calendars(admin_service, calendar_service, excludeList)
 
 			for i in calendarList:
 				lastUpdated = get_last_update(db_file, i['id'])
