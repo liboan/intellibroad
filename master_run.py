@@ -14,8 +14,8 @@ parser.add_argument('--credentials', help='credentials file', default='credentia
 # argument for grabbing a specific calendar
 parser.add_argument('-c', metavar = 'calendar', help='calendar email address, will pull all events from calendar')
 
-# argument to force get all events, instead of most recently updated
-parser.add_argument('--get-all', action='store_true')
+parser.add_argument('--get-all', action='store_true') # arg to force get all events, instead of most recently updated
+parser.add_argument('--get-recent', action='store_true') # arg to force get last 14 days, instead of most recently updated
 
 args = parser.parse_args()
 
@@ -56,6 +56,8 @@ def update():
 
 				if args.get_all:
 					lastUpdated = None # for force grabbing all events
+				if args.get_recent:
+					lastUpdated = (datetime.datetime.now() - datetime.timedelta(days=14)).isoformat('T') + 'z'
 
 				print(i['summary'] + ' last updated: ' + str(lastUpdated))
 				try:
@@ -82,7 +84,7 @@ def update():
 		print("update() complete in %d sec" % (delta.seconds))
 		""""""""""""
 
-		
+
 		# error :(
 		return 1
 
