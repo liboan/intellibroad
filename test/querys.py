@@ -120,6 +120,22 @@ def query_person_similar_people(db_file, employee_id):
 
 """MEETING QUERYING"""
 
+def query_meeting_people(db_file, event_id):
+	"""Returns a list of sqlite3.Row objects for people attending a given event.\n
+	db_file: path to database, a string
+	event_id: ID of event, a string
+	"""
+	conn = create_connection(db_file)
+	conn.row_factory = sqlite3.Row
+	c = conn.cursor()
+
+	queryString = """SELECT name, employees.employee_id FROM 
+	invitations INNER JOIN employees ON employees.employee_id = invitations.employee_id WHERE event_id = ?"""
+
+	c.execute(queryString, (event_id,))
+
+	return c.fetchall()
+
 def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplicate_names=True):
 	"""Returns a list of sqlite3.Row objects for events, ordered from most to least similar to
 	the searched event by Jaccard index of their attendees.\n
@@ -135,7 +151,7 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplica
 	c.execute('SELECT name FROM events WHERE event_id = ?', (event_id,))
 	name = c.fetchone()[0] # first member in row tuple
 
-	scores = query_meeting_similarity(db_file, event_id) # returns sorted list of tuples (id, score)
+	scores = calculate_meeting_similarity(db_file, event_id) # returns sorted list of tuples (id, score)
 
 	rowList = []
 
@@ -155,7 +171,7 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplica
 	return rowList
 
 
-def query_meeting_similarity(db_file, event_id):
+def calculate_meeting_similarity(db_file, event_id):
 	"""Searches database for events that are potentially similar to the specified event. 
 	Similarity is obtained by finding the Jaccard index of the two events' attendee lists.
 	Returns list of tuples (event id, Jaccard index) sorted from highest score to lowest.
