@@ -15,9 +15,9 @@ args = parser.parse_args()
 """QUERYING BY ID"""
 
 def query_meeting_by_id(db_file, item_id):
-	"""Returns an SQLite3.Row object for the meeting with specified id, or None if no event is found.\n
+	"""Returns an SQLite3.Row object for the meeting with specified id.\n
 	db_file: string, path to database
-	item_id: item id
+	item_id: string, item id
 	"""
 	conn = create_connection(db_file)
 	conn.row_factory = sqlite3.Row
@@ -31,9 +31,9 @@ def query_meeting_by_id(db_file, item_id):
 	return results
 
 def query_person_by_id(db_file, item_id):
-	"""Returns an SQLite3.Row object for the person with specified id, or None if no event is found.\n
+	"""Returns an SQLite3.Row object for the person with specified id.\n
 	db_file: string, path to database
-	item_id: item id
+	item_id: string, item id
 	"""
 	conn = create_connection(db_file)
 	conn.row_factory = sqlite3.Row
@@ -43,6 +43,42 @@ def query_person_by_id(db_file, item_id):
 
 	
 	results = c.fetchone()
+	conn.close()
+	return results
+
+"""QUERYING BY SEARCH TERM"""
+def query_person_search(db_file, term):
+	"""Returns a list of SQLite3.Row objects for employees (no rooms/resources) whose emails or names contain the term.\n
+	db_file: string, path to database
+	term: string, search term
+	"""
+	conn = create_connection(db_file)
+	conn.row_factory = sqlite3.Row
+	c = conn.cursor()
+
+	termString = '%' + str(term) + '%'
+
+	c.execute("""SELECT * FROM employees WHERE (name LIKE ? OR employee_id LIKE ?)
+	AND employee_id NOT LIKE '%calendar.google.com'""", (termString, termString))
+
+	results = c.fetchall()
+	conn.close()
+	return results
+
+def query_meeting_search(db_file, term):
+	"""Returns a list of SQLite3.Row objects for meetings whose subjects or descriptions contain the term.\n
+	db_file: string, path to database
+	term: string, search term
+	"""
+	conn = create_connection(db_file)
+	conn.row_factory = sqlite3.Row
+	c = conn.cursor()
+
+	termString = '%' + str(term) + '%'
+
+	c.execute("SELECT * FROM events WHERE name LIKE ? or description LIKE ?", (termString, termString))
+
+	results = c.fetchall()
 	conn.close()
 	return results
 
@@ -67,7 +103,8 @@ def query_topic_employees(db_file, term):
 	queryString = """
 	SELECT name, employees.employee_id, count(*) FROM invitations 
 	INNER JOIN employees ON employees.employee_id = invitations.employee_id 
-	WHERE invitations.event_id IN (SELECT event_id FROM events WHERE name LIKE ?)
+	WHERE employees.employee_id NOT LIKE '%calendar.google.com' AND
+	invitations.event_id IN (SELECT event_id FROM events WHERE name LIKE ?)
 	GROUP BY invitations.employee_id ORDER BY -count(*);
 	"""
 
