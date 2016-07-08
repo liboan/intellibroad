@@ -22,9 +22,14 @@ args = parser.parse_args()
 print("####ARGS####")
 print(args)
 
+credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
+client_secret_file = args.secret # 'client_secret.json'
+credentials_file = args.credentials # 'credentials.json'
+# db_file = args.db # 'intellibroad.db'
+
 from master import *
 
-def update():
+def update(db_file = args.db):
 	"""Master update function, should be called regularly to pull event data and push it to database.\n
 	Returns 0 if no error, 1 if there is an error.
 	"""
@@ -38,11 +43,6 @@ def update():
 		"""TIMING"""
 		start = datetime.datetime.now()
 		""""""""""""
-
-		credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
-		client_secret_file = args.secret # 'client_secret.json'
-		credentials_file = args.credentials # 'credentials.json'
-		db_file = args.db # 'intellibroad.db'
 
 		create_tables(db_file)
 
