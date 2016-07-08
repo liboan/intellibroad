@@ -63,7 +63,7 @@ def update(db_file = args.db):
 					lastUpdated = None # for force grabbing all events
 				if args.get_recent:
 					lastUpdated = (datetime.datetime.now() - datetime.timedelta(days=14)).isoformat('T') + 'z'
-
+					# for getting the last 14 days worth of events
 				print(i['summary'] + ' last updated: ' + str(lastUpdated))
 				try:
 					eventList += pull_calendar_events(calendar_service, i['id'], lastUpdated)

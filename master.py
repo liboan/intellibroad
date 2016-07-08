@@ -158,7 +158,6 @@ def create_connection(db_file):
 	"""Creates and returns a database connection to a SQLite database\n
 	db_file: string, database location"""
 	conn = sqlite3.connect(db_file)
-	print("Created connection with " + db_file)
 	return conn
 
 def create_tables(db_file):
