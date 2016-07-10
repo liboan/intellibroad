@@ -1,0 +1,15 @@
+{% extends 'layout_bs.html' %}
+{% block page_data %}
+<div id='searchResults'>
+	{% if response %}
+		{% if response['personList'] %}
+			{{ renderPersonList(response['personList']) }}
+		{% endif %}
+
+		{% if response['meetingList'] %}
+			{{ renderMeetingList(response['meetingList']) }}
+		{% endif %}
+	{% endif %}
+</div>
+	
+{% endblock page_data %}

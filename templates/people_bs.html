@@ -1,0 +1,21 @@
+{% extends 'layout_bs.html' %}
+{% block page_data %}
+	<div class='row'>
+		<h2 class='employeeName'>{{ response['info']['name'] }}</h2>
+		<h3 class='emailAddress'>
+			<a href="mailto:{{ response['info']['employee_id'] }}">
+				{{ response['info']['employee_id'] }}
+			</a>
+		</h3>
+	</div>
+	<div class='row'>
+		<div class='col-md-8'>
+			<h2>Meetings for this person in the recent past or near future</h2>
+			{{ renderMeetingList(response['nearbyMeetings']) }}
+		</div>
+		<div class='col-md-4'>
+			<h2>People with similar subject knowledge to this person</h2>
+			{{ renderPersonList(response['similarPeople']) }}
+		</div>
+	</div>
+{% endblock page_data %}

@@ -1,0 +1,20 @@
+{% extends 'layout_bs.html' %}
+{% block page_data %}
+	<div class='row'>
+		<h2 class='eventName'>{{ response['info']['name'] }}</h2>
+		<h3 class='startTime'>{{ response['info']['start_time'] }}</h3>
+		<h3 class='location'>{{ response['info']['location'] }}</h3>
+		<p class='description'>{{ response['info']['description'] }}</p>
+	</div>
+	<div class='row'>
+		<div class='col-md-4'>
+			<h2>Meeting Attendees</h2>
+			{{ renderPersonList(response['meetingAttendees']) }}
+		</div>
+		<div class='col-md-8'>
+			<h2>Meetings with similar attendance</h2>
+			{{ renderMeetingList(response['similarMeetings']) }}
+		</div>
+	</div>	
+{% endblock page_data %}
+
