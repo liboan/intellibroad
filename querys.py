@@ -85,10 +85,11 @@ def query_meeting_search(db_file, term):
 
 """TOPIC QUERYING"""
 
-def query_topic_employees(db_file, term):
+def query_topic_employees(db_file, term, max_results=50):
 	"""Searches database and returns list of sqlite3.Row objects for each employee who showed up in a relevant event, ordered from most to least frequent. \n 
 	db_file: path to database, a string
-	term: search term, a string"""
+	term: search term, a string
+	max_results: integer, max number of results to return"""
 
 	term = str(term) # convert search term, just to be sure
 	print(term)
@@ -101,7 +102,7 @@ def query_topic_employees(db_file, term):
 	"""SQLite commands for associated people"""
 
 	queryString = """
-	SELECT name, employees.employee_id, count(*) FROM invitations 
+	SELECT employees.employee_id, name, count(*) FROM invitations 
 	INNER JOIN employees ON employees.employee_id = invitations.employee_id 
 	WHERE employees.employee_id NOT LIKE '%calendar.google.com' AND
 	invitations.event_id IN (SELECT event_id FROM events WHERE name LIKE ?)
@@ -110,7 +111,7 @@ def query_topic_employees(db_file, term):
 
 
 	c.execute(queryString, (term,))
-	results = c.fetchall()
+	results = c.fetchall()[0:max_results]
 	conn.close()
 	return results
 
@@ -135,7 +136,7 @@ def query_topic_meetings(db_file, term, lower_bound_days=30, upper_bound_days=30
 	# time bounds, we will plug these into SQLite and search between them
 
 	queryString = """
-	SELECT * FROM events WHERE name LIKE ? AND start_time > ? AND start_time < ?"""
+	SELECT * FROM events WHERE name LIKE ? AND start_time > ? AND start_time < ? ORDER BY -start_time"""
 
 	c.execute(queryString, (term, pastBound, futureBound))
 
@@ -178,11 +179,13 @@ def query_person_meetings(db_file, employee_id, lower_bound_days=30, upper_bound
 	conn.close()
 	return results
 
-def query_person_similar_people(db_file, employee_id):
+def query_person_similar_people(db_file, employee_id, max_results=20):
 	"""Searches database and returns list of sqlite3.Row objects for people the searched person share
 	meetings with, in order of most shared meetings. \n
 	db_file: path to database, a string
-	employee_id: person's id (email address), a string"""
+	employee_id: person's id (email address), a string
+	max_results: integer, max number of results to return
+	"""
 	if '@' not in employee_id:
 		print("NOT AN EMAIL ADDRESS")
 		return None
@@ -192,15 +195,17 @@ def query_person_similar_people(db_file, employee_id):
 	c = conn.cursor()
 
 	queryString = """
-	SELECT name, employees.employee_id, count(*) FROM invitations 
+	SELECT employees.employee_id, name, count(*) FROM invitations 
 	INNER JOIN employees ON employees.employee_id = invitations.employee_id 
-	WHERE invitations.event_id IN (SELECT event_id FROM invitations WHERE employee_id LIKE ?)
+	WHERE employees.employee_id NOT LIKE '%calendar.google.com' 
+	AND employees.employee_id != ?
+	AND invitations.event_id IN (SELECT event_id FROM invitations WHERE employee_id LIKE ?)
 	GROUP BY invitations.employee_id ORDER BY -count(*);"""
 
-	c.execute(queryString, (employee_id,))
+	c.execute(queryString, (employee_id,employee_id))
 
 	
-	results = c.fetchall()
+	results = c.fetchall()[0:max_results]
 	conn.close()
 	return results
 
@@ -215,8 +220,9 @@ def query_meeting_people(db_file, event_id):
 	conn.row_factory = sqlite3.Row
 	c = conn.cursor()
 
-	queryString = """SELECT name, employees.employee_id FROM 
-	invitations INNER JOIN employees ON employees.employee_id = invitations.employee_id WHERE event_id = ?"""
+	queryString = """SELECT employees.employee_id, name FROM 
+	invitations INNER JOIN employees ON employees.employee_id = invitations.employee_id 
+	WHERE event_id = ? AND employees.employee_id NOT LIKE '%calendar.google.com'"""
 
 	c.execute(queryString, (event_id,))
 
