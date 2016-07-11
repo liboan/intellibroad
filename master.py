@@ -171,7 +171,7 @@ def create_tables(db_file):
 	# Gonna start by hardcoding in the three tables we want.
 
 	c.execute("CREATE TABLE IF NOT EXISTS events ( event_id text PRIMARY KEY, name text, description text, start_time text, recurrence text, location text, last_update text, htmlLink text)")
-	c.execute("CREATE TABLE IF NOT EXISTS employees ( employee_id text PRIMARY KEY, name text )")
+	c.execute("CREATE TABLE IF NOT EXISTS employees ( employee_id text PRIMARY KEY, name text, last_meeting text )")
 	c.execute("CREATE TABLE IF NOT EXISTS invitations ( event_id text, employee_id text, response text, UNIQUE (event_id, employee_id))")
 
 	conn.commit()
@@ -217,7 +217,7 @@ def push_events_to_database(db_file, items):
 		c: sqlite3 Cursor object
 		table_name: string of the name of table
 		num_columns: int, number of columns in the table
-		replace: bool, if row id already exists, replace or ignore?
+		replace: boolean, if row id already exists, should we replace or ignore?
 		"""
 		behaviorString = "IGNORE" 
 
@@ -241,7 +241,7 @@ def push_events_to_database(db_file, items):
 		return write_row
 	
 	write_events = make_row_writer(c, 'events', 8) # in cases of recurring events, we want the earliest to stay
-	write_employees = make_row_writer(c, 'employees', 2, replace=True) # but in case of employees, we want newest name in database
+	write_employees = make_row_writer(c, 'employees', 3, replace=True) # but in case of employees, we want newest name in database
 	write_invitations = make_row_writer(c, 'invitations', 3)
 
 	for item in items:
@@ -273,7 +273,7 @@ def push_events_to_database(db_file, items):
 			# Now we add employees and invitations. If no screen name, use their email instead.
 
 			for attendee in item['attendees']:
-				write_employees(attendee['email'], attendee.get('displayName', attendee['email']))
+				write_employees(attendee['email'], attendee.get('displayName', attendee['email']), item['updated'])
 				write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
 
 	conn.commit()

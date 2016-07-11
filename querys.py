@@ -59,7 +59,7 @@ def query_person_search(db_file, term):
 	termString = '%' + str(term) + '%'
 
 	c.execute("""SELECT * FROM employees WHERE (name LIKE ? OR employee_id LIKE ?)
-	AND employee_id NOT LIKE '%calendar.google.com'""", (termString, termString))
+	AND employee_id NOT LIKE '%calendar.google.com' ORDER BY last_meeting DESC""", (termString, termString))
 
 	results = c.fetchall()
 	conn.close()
@@ -76,7 +76,7 @@ def query_meeting_search(db_file, term):
 
 	termString = '%' + str(term) + '%'
 
-	c.execute("SELECT * FROM events WHERE name LIKE ? or description LIKE ?", (termString, termString))
+	c.execute("SELECT * FROM events WHERE name LIKE ? or description LIKE ? ORDER BY start_time DESC", (termString, termString))
 
 	results = c.fetchall()
 	conn.close()
