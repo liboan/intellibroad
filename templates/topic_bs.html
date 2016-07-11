@@ -2,15 +2,15 @@
 {% block page_data %}
 <div class='row'>
 	{% if response %}
-	<h3>Related meetings occurring in the recent past and near future</h3>
 	<div class='col-md-8'>
+		<h3>Related meetings occurring in the recent past and near future</h3>
 		{% if response['meetingList'] %}
 			{{ renderMeetingList(response['meetingList']) }}
 		{% endif %}
 	</div>
 
-	<h3>People with expertise in the topic</h3>
 	<div class='col-md-4'>
+		<h3>People with expertise in the topic</h3>
 		{% if response['personList'] %}
 			{{ renderPersonList(response['personList']) }}
 		{% endif %}
