@@ -136,7 +136,7 @@ def query_topic_meetings(db_file, term, lower_bound_days=30, upper_bound_days=30
 	# time bounds, we will plug these into SQLite and search between them
 
 	queryString = """
-	SELECT * FROM events WHERE name LIKE ? AND start_time > ? AND start_time < ? ORDER BY -start_time"""
+	SELECT * FROM events WHERE name LIKE ? AND start_time > ? AND start_time < ? ORDER BY start_time ASC"""
 
 	c.execute(queryString, (term, pastBound, futureBound))
 
@@ -169,7 +169,7 @@ def query_person_meetings(db_file, employee_id, lower_bound_days=30, upper_bound
 	queryString = """
 	SELECT * FROM events WHERE event_id IN 
 	(SELECT event_id FROM invitations WHERE employee_id LIKE ?) AND
-	start_time > ? AND start_time < ? ORDER BY event_id;
+	start_time > ? AND start_time < ? ORDER BY start_time ASC;
 	"""
 
 	c.execute(queryString, (employee_id,pastBound,futureBound))
