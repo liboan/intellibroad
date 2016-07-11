@@ -1,9 +1,14 @@
 {% extends 'layout_bs.html' %}
+
+
 {% block page_data %}
 	<div class='row'>
 		<h2 class='eventName'>{{ response['info']['name'] }}</h2>
-		<h3 class='startTime'>{{ response['info']['start_time'] }}</h3>
-		<h3 class='location'>{{ response['info']['location'] }}</h3>
+		<strong><a href="{{ response['info']['htmlLink'] }}" target='_blank'>Open in Google Calendar</a></strong>
+		<h4 class='startTime'>Time: {{ response['info']['start_time'] }}</h3>
+		<h4 class='recurrence'>{{ response['info']['recurrence'] }}</h4>
+		<h4 class='location'>Location: {{ response['info']['location'] }}</h3>
+		<h4>Description:</h3>
 		<p class='description'>{{ response['info']['description'] }}</p>
 	</div>
 	<div class='row'>
@@ -15,6 +20,17 @@
 			<h2>Meetings with similar attendance</h2>
 			{{ renderMeetingList(response['similarMeetings']) }}
 		</div>
-	</div>	
+	</div>
+
+	<!-- RRule Script Stuff -->
+	<script type="text/javascript" src="{{ url_for('static', filename='js/rrule.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/nlp.js') }}"></script>
+	<script type="text/javascript">
+		a = "{{ response['info']['recurrence'] }}";
+		a_natural = "Repeats: " + rrulestr(a.substring(a.search("RRULE:")+6)).toText();
+		document.getElementsByClassName('recurrence')[0].innerHTML = a_natural;
+	</script>
+
 {% endblock page_data %}
+
 
