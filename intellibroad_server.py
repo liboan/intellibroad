@@ -5,6 +5,7 @@ from flask_bootstrap import Bootstrap
 import datetime
 import master_run
 from querys import *
+from people_graph import *
 
 app = Flask(__name__)
 
@@ -144,15 +145,51 @@ def curate_meeting_list(data):
 		new_data.append(curate_meeting_row(row))
 	return new_data
 
+""" GRAPH for similar people """
+
+def generate_employee_graph(employee_row):
+	"""Given an SQLite3.Row object for an employee, returns graph showing connections to similar employees"""
+	employee_graph = make_graph()
+
+	add_node(employee_graph, employee_row['name']) # Add employee's row as a node.
+
+	first_order_connections = query_person_similar_people(app.config['DATABASE'], employee_row['employee_id'])
+	first_order_connections = first_order_connections[0:20]
+	# Add all 20 1st-order connections to graph.
+	for connection in first_order_connections:
+		add_node(employee_graph, connection['name'])
+		add_edge(employee_graph, employee_row['name'], connection['name'])
+
+	# Now that they're all in, search the connections of each for any existing ones and link 'em up.
+	# NO NEW NODES, just extra connections.
+	for connection in first_order_connections:
+		second_order_connections = query_person_similar_people(app.config['DATABASE'], connection['employee_id'],max_results=10)
+		for connection2 in second_order_connections:
+			if connection2['name'] in get_nodes(employee_graph):
+				# If any of the 2nd order connections are also 1st order connections to the original,
+				# we can draw an edge between them.
+				add_edge(employee_graph, connection['name'], connection2['name'])
+
+	return employee_graph
+
+@app.route('/graph')
+def display_graph():
+	row = query_person_by_id(app.config['DATABASE'], 'aviad@broadinstitute.org')
+	graph = generate_employee_graph(row)
+	return json.dumps(graph)
+
+@app.route('/graphpage')
+def send_graph_page():
+	return send_from_directory('static',"vis_js_test.html")
+
+
+
+""""""
+
 @app.route('/update')
 def update():
 	return str(master_run.update(app.config['DATABASE']))
 
-"""TESTING BOOTSTRAP"""
-
-@app.route('/bootstrap')
-def home_bs():
-	return render_template('layout_bs.html')
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', debug=True)
