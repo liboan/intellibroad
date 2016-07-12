@@ -12,11 +12,11 @@
 		<p class='description'>{{ response['info']['description'] }}</p>
 	</div>
 	<div class='row'>
-		<div class='col-md-4'>
+		<div class='col-md-5'>
 			<h2>Meeting Attendees</h2>
 			{{ renderPersonList(response['meetingAttendees']) }}
 		</div>
-		<div class='col-md-8'>
+		<div class='col-md-7'>
 			<h2>Meetings with similar attendance</h2>
 			{{ renderMeetingList(response['similarMeetings']) }}
 		</div>

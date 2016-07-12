@@ -2,19 +2,19 @@
 {% block page_data %}
 	<div class='row'>
 		<h2 class='employeeName'>{{ response['info']['name'] }}</h2>
-		<h3 class='emailAddress'>
+		<h4 class='emailAddress'>
 			<a href="mailto:{{ response['info']['employee_id'] }}">
 				{{ response['info']['employee_id'] }}
 			</a>
-		</h3>
+		</h4>
 	</div>
 	<div class='row'>
-		<div class='col-md-8'>
+		<div class='col-md-7'>
 			<h2>Meetings for this person in the recent past and near future</h2>
 			{{ renderMeetingList(response['nearbyMeetings']) }}
 		</div>
-		<div class='col-md-4'>
-			<h2>People with similar subject knowledge to this person</h2>
+		<div class='col-md-5'>
+			<h2>People with similar subject knowledge</h2>
 			{{ renderPersonList(response['similarPeople']) }}
 		</div>
 	</div>

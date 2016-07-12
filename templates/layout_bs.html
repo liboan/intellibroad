@@ -47,6 +47,7 @@
 {%- endmacro %}
 
 
+
 {% block title %}
 IntelliBroad
 {% endblock %}
@@ -57,7 +58,13 @@ IntelliBroad
 {% endblock %}
 
 
+
 {% block body %}
+
+	{% block scripts %}
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+	{% endblock %}
 
 	{% block navbar %}
 		<nav class="navbar navbar-inverse navbar-fixed-top">
