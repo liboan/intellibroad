@@ -14,8 +14,8 @@ parser.add_argument('--credentials', help='credentials file', default='credentia
 # argument for grabbing a specific calendar
 parser.add_argument('-c', metavar = 'calendar', help='calendar email address, will pull all events from calendar')
 
-parser.add_argument('--get-all', action='store_true') # arg to force get all events, instead of most recently updated
-parser.add_argument('--get-recent', action='store_true') # arg to force get last 14 days, instead of most recently updated
+parser.add_argument('--get-all', help='get all events since beginning of time', action='store_true') # arg to force get all events, instead of most recently updated
+parser.add_argument('--get-from', default=0, help='get all events from 1 to 20 days back') # arg to force get last 14 days, instead of most recently updated
 
 args = parser.parse_args()
 
@@ -61,8 +61,8 @@ def update(db_file = args.db):
 
 				if args.get_all:
 					lastUpdated = None # for force grabbing all events
-				if args.get_recent:
-					lastUpdated = (datetime.datetime.now() - datetime.timedelta(days=14)).isoformat('T') + 'z'
+				if args.get_from:
+					lastUpdated = (datetime.datetime.now() - datetime.timedelta(days=int(args.get_from))).isoformat('T') + 'z'
 					# for getting the last 14 days worth of events
 				print(i['summary'] + ' last updated: ' + str(lastUpdated))
 				try:
@@ -92,4 +92,7 @@ def update(db_file = args.db):
 
 		# error :(
 		return 1
+
+if __name__ == '__main__':
+	update()
 
