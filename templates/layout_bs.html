@@ -5,17 +5,30 @@
 		<table class='table table-hover table-condensed'>
 			<tr>
 				<th>Name</th>
+
+				{% if 'count(*)' in data[0] %}
+					<th>Similarity Score</th>
+				{% endif %}
+
 				<th>Email</th>
 			</tr>
 
 			{% for row in data %}
 				<tr>
 					<td><a href="/item?itemType=person&id={{ row['employee_id'] }}">{{ row['name'] }}</a></td>
+
+					{% if 'count(*)' in row %}
+						<td>
+							{{ row['count(*)'] }}
+						</td>
+					{% endif %}
+
 					<td>
 						<a href="mailto:{{ row['employee_id'] }}">
 							{{ row['employee_id'] }}
 						</a>
 					</td>
+
 				</tr>
 			{% endfor %}
 
@@ -30,6 +43,11 @@
 				<th>Name</th>
 				<th>Time</th>
 				<th>Location</th>
+
+				{% if 'jaccard_score' in data[0] %}
+					<th>Similarity Score</th>
+				{% endif %}
+
 				<th>Open in Google Calendar</th>
 			</tr>
 
@@ -38,6 +56,11 @@
 					<td><a href="/item?itemType=meeting&id={{ row['event_id'] }}">{{ row['name'] }}</a></td>
 					<td>{{ row['start_time'] }}</td>
 					<td>{{ row['location'] }}</td>
+
+					{% if 'jaccard_score' in row %}
+						<td>{{ row['jaccard_score'] }}</td>
+					{% endif %}
+
 					<td><a href="{{ row['htmlLink'] }}" target="_blank">Link</a></td>
 				</tr>
 			{% endfor %}

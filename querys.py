@@ -232,7 +232,7 @@ def query_meeting_people(db_file, event_id):
 	return results
 
 def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplicate_names=True):
-	"""Returns a list of sqlite3.Row objects for events, ordered from most to least similar to
+	"""Returns a list of DICTIONARIES objects for events, ordered from most to least similar to
 	the searched event by Jaccard index of their attendees.\n
 	db_file: path to database, a string
 	event_id: ID of event, a string
@@ -260,7 +260,11 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplica
 			max_results += 1 # we increment max_results bc we now need one more!
 		else:
 			# otherwise, append!
-			rowList.append(row)
+
+			# make the row into a dict so we can add its Jaccard index
+			row_with_score = dict(row)
+			row_with_score['jaccard_score'] = scores[i][1]
+			rowList.append(row_with_score)
 		i += 1 
 
 	conn.close()
