@@ -249,32 +249,40 @@ def push_events_to_database(db_file, items):
 			# we don't want cancelled events, we don't want private events for which we can't see
 			# attendees, we don't want events without start times (because what would those be anyways)
 
-			# IDs of recurring instances have an _ after them with a timestamp. Removing that makes 
-			# all recurrences have identical IDs. The database will only accept the first one added,
-			# and will ignore all others.
-			item['id'] = item['id'].split('_')[0]
-
-			# MAKE SURE THESE MATCH THE ORDER OF THE event TABLE COLUMNS!!!
-			# Fields will get a space if they do not exist
-
-			event_values = [
-				item.get('id', ''),
-				item.get('summary', ''), 
-				item.get('description', ''), 
-				item.get('start').get('dateTime', ''), 
-				' '.join(item.get('recurrence', '')), 
-				item.get('location', ''), 
-				item.get('updated', ''), 
-				item.get('htmlLink', '')
-			]
-
-			write_events(*event_values)
-
-			# Now we add employees and invitations. If no screen name, use their email instead.
-
+			# We're deleting all rooms or resources from list of attendees.
 			for attendee in item['attendees']:
-				write_employees(attendee['email'], attendee.get('displayName', attendee['email']), item['updated'])
-				write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
+				if '.google.com' in attendee['email']:
+					item['attendees'].remove(attendee)
+
+			# If the event has no attendees now, don't bother adding it.
+			if len(item['attendees']) > 0:
+
+				# IDs of recurring instances have an _ after them with a timestamp. Removing that makes 
+				# all recurrences have identical IDs. The database will only accept the first one added,
+				# and will ignore all others.
+				item['id'] = item['id'].split('_')[0]
+
+				# MAKE SURE THESE MATCH THE ORDER OF THE event TABLE COLUMNS!!!
+				# Fields will get a space if they do not exist
+
+				event_values = [
+					item.get('id', ''),
+					item.get('summary', ''), 
+					item.get('description', ''), 
+					item.get('start').get('dateTime', ''), 
+					' '.join(item.get('recurrence', '')), 
+					item.get('location', ''), 
+					item.get('updated', ''), 
+					item.get('htmlLink', '')
+				]
+
+				write_events(*event_values)
+
+				# Now we add employees and invitations. If no screen name, use their email instead.
+
+				for attendee in item['attendees']:
+					write_employees(attendee['email'], attendee.get('displayName', attendee['email']), item['updated'])
+					write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
 
 	conn.commit()
 	conn.close()
