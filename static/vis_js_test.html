@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'></script>
+	<script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js'></script>
+</head>
+<body>
+	<div id='mynetwork'></div>
+	<script type="text/javascript">
+		$.get("/graph", function (data) {
+			a = JSON.parse(data);
+
+			nodeList = [];
+			edgeList = [];
+
+			for (var i = a[0].length - 1; i >= 0; i--) {
+				//nodes.push(a[0][i]);
+				nodeList.push({
+					id: a[0][i],
+					label: a[0][i]
+				});
+			}
+			for (var i = a[1].length - 1; i >= 0; i--) {
+				edgeList.push({
+					from: a[1][i][0],
+					to: a[1][i][1]
+				});
+			}
+
+			var nodes = new vis.DataSet(nodeList);
+			var edges = new vis.DataSet(edgeList);
+
+			var container = document.getElementById('mynetwork');
+
+			var data = {
+				nodes: nodes,
+				edges: edges
+			};
+			var options = {
+				height: '400px',
+				width: '400px'
+			};
+			var network = new vis.Network(container, data, options)
+		});
+		
+
+
+	</script>
+</body>
+</html>
