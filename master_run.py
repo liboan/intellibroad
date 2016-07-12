@@ -46,7 +46,7 @@ def update(db_file = args.db):
 
 		create_tables(db_file)
 
-		admin_service, calendar_service = create_api_service(credentials_dir, client_secret_file, credentials_file)
+		admin_service, calendar_service = create_api_service(args, credentials_dir, client_secret_file, credentials_file)
 
 		eventList = []
 

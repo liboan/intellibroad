@@ -31,7 +31,7 @@ from sqlite3 import Error
 
 """API-RELATED METHODS"""
 
-def create_api_service(credentials_dir, client_secret_file, credentials_file): 
+def create_api_service(flags, credentials_dir, client_secret_file, credentials_file): 
 	"""Fetches or creates credentials, initializes resource objects Google Apps Admin SDK and Google Calendar API resource returns tuple of resource objects: (Admin SDK Object, Calendar API Object)
 	\n
 	credentials_dir: string, path to directory where credential and client secret files reside
