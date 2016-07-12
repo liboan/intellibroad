@@ -7,7 +7,9 @@
 				<th>Name</th>
 
 				{% if 'count(*)' in data[0] %}
-					<th>Similarity Score</th>
+					<th title='Number of events shared by these two people'>
+						<a>Similarity Score</a>
+					</th>
 				{% endif %}
 
 				<th>Email</th>
@@ -45,7 +47,9 @@
 				<th>Location</th>
 
 				{% if 'jaccard_score' in data[0] %}
-					<th>Similarity Score</th>
+					<th title='Jaccard index of the attendees of both events'>
+						<a>Similarity Score</a>
+					</th>
 				{% endif %}
 
 				<th>Open in Google Calendar</th>
