@@ -203,7 +203,6 @@ def generate_employee_keywords(employee_row):
 	freqs = [word[1]/total for word in keywords] # get frequencies
 
 	keywordFreqs = zip([word[0] for word in keywords], freqs) # zip each word with its frequency
-	print(keywordFreqs)
 	return keywordFreqs
 
 @app.route('/wordcloud')
