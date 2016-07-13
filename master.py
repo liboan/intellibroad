@@ -245,7 +245,7 @@ def push_events_to_database(db_file, items):
 	write_invitations = make_row_writer(c, 'invitations', 3)
 
 	for item in items:
-		if item['status'] != 'cancelled' and 'attendees' in item and 'summary' in item and 'start' in item:
+		if len(item.get('id','')) > 5 and item['status'] != 'cancelled' and 'attendees' in item and 'summary' in item and 'start' in item:
 			# we don't want cancelled events, we don't want private events for which we can't see
 			# attendees, we don't want events without start times (because what would those be anyways)
 

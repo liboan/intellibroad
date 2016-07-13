@@ -298,6 +298,10 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=20, no_duplica
 		# look through slice of list (if max_results is too big, will do entire list)
 		c.execute('SELECT * FROM events WHERE event_id = ?', (scores[i][0],)) # event ID is first member of tuple
 		row = c.fetchone()
+		if not row:
+			# if the row is None, break out, no more results.
+			break
+
 		if no_duplicate_names and row['name'] == name:
 			# if we ARE curating, and the names match...
 			max_results += 1 # we increment max_results bc we now need one more!
