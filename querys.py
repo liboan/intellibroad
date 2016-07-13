@@ -16,6 +16,10 @@ parser.add_argument('-db')
 
 args = parser.parse_args()
 
+import os
+
+os.system("python -m nltk.downloader stopwords names")
+
 """QUERYING BY ID"""
 
 def query_meeting_by_id(db_file, item_id):
