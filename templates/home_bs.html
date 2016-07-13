@@ -3,7 +3,7 @@
 <div id='searchResults'>
 	{% if response %}
 		{% if response['personList'] %}
-			{{ renderPersonList(response['personList']) }}
+			{{ renderPersonList(response['personList'], '', response['time']) }}
 		{% endif %}
 
 		{% if response['meetingList'] %}

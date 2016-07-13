@@ -110,7 +110,7 @@ def query_topic_employees(db_file, term, max_results=50):
 	"""SQLite commands for associated people"""
 
 	queryString = """
-	SELECT employees.employee_id, name, count(*) FROM invitations 
+	SELECT *, count(*) FROM invitations 
 	INNER JOIN employees ON employees.employee_id = invitations.employee_id 
 	WHERE employees.employee_id NOT LIKE '%calendar.google.com' AND
 	invitations.event_id IN (SELECT event_id FROM events WHERE name LIKE ?)
@@ -203,7 +203,7 @@ def query_person_similar_people(db_file, employee_id, max_results=20):
 	c = conn.cursor()
 
 	queryString = """
-	SELECT employees.employee_id, name, count(*) FROM invitations 
+	SELECT *, count(*) FROM invitations 
 	INNER JOIN employees ON employees.employee_id = invitations.employee_id 
 	WHERE employees.employee_id NOT LIKE '%calendar.google.com' 
 	AND employees.employee_id != ?
@@ -263,7 +263,7 @@ def query_meeting_people(db_file, event_id):
 	conn.row_factory = sqlite3.Row
 	c = conn.cursor()
 
-	queryString = """SELECT employees.employee_id, name FROM 
+	queryString = """SELECT * FROM 
 	invitations INNER JOIN employees ON employees.employee_id = invitations.employee_id 
 	WHERE event_id = ? AND employees.employee_id NOT LIKE '%calendar.google.com'"""
 

@@ -42,7 +42,7 @@
 		</div>
 		<div class='col-md-5'>
 			<h2>People who have attended the same meetings as this person</h2>
-			{{ renderPersonList(response['similarPeople'], "# of matching meetings") }}
+			{{ renderPersonList(response['similarPeople'], "# of matching meetings", response['time']) }}
 		</div>
 	</div>
 	<!-- SCRIPT STUFF FOR NETWORK & WORDCLOUD -->

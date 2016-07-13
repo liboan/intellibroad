@@ -30,6 +30,10 @@ app.config.update(dict(
 
 Bootstrap(app) # Load Bootstrap for templates!
 
+def time_cutoff(days=90):
+	"""returns timestamp of one year ago (default) to serve as a cutoff for 'noactivity' employees"""
+	return (datetime.datetime.now() + datetime.timedelta(days=-days)).isoformat('T')
+
 @app.route('/')
 def home():
 	return render_template('home_bs.html')
@@ -55,14 +59,16 @@ def get_item_by_id():
 		response = {
 			'info': curate_person_row(query_person_by_id(app.config['DATABASE'], item_id)), # own information
 			'nearbyMeetings': curate_meeting_list(query_person_meetings(app.config['DATABASE'], item_id)), # meetings in +/- 30 days
-			'similarPeople': curate_person_list(query_person_similar_people(app.config['DATABASE'], item_id)) # similar people
+			'similarPeople': curate_person_list(query_person_similar_people(app.config['DATABASE'], item_id)), # similar people
+			'time': time_cutoff()
 		}
 		return render_template('people_bs.html', response=response)
 	elif item_type == 'meeting':
 		response = {
 			'info': curate_meeting_row(query_meeting_by_id(app.config['DATABASE'], item_id)), # own info
 			'meetingAttendees': curate_person_list(query_meeting_people(app.config['DATABASE'], item_id)), # attendees
-			'similarMeetings': curate_meeting_list(query_meeting_similar_meetings(app.config['DATABASE'], item_id)) # similar meetings
+			'similarMeetings': curate_meeting_list(query_meeting_similar_meetings(app.config['DATABASE'], item_id)), # similar meetings
+			'time': time_cutoff()
 		}
 		return render_template('meeting_bs.html', response=response)
 	else:
@@ -89,6 +95,7 @@ def search_person(term):
 
 	response = {
 		'personList': curate_person_list(list_from_db),
+		'time': time_cutoff()
 	}
 
 	return render_template('home_bs.html', response=response)
@@ -101,6 +108,7 @@ def search_meeting(term):
 
 	response = {
 		'meetingList': curate_meeting_list(list_from_db),
+		'time': time_cutoff()
 	}
 	return render_template('home_bs.html', response=response)
 
@@ -115,7 +123,9 @@ def search_topic(term, lower_bound_days=30, upper_bound_days=30):
 
 	return render_template('topic_bs.html', response = {
 		'personList': curate_person_list(employees_from_db), 
-		'meetingList': curate_meeting_list(meetings_from_db)})
+		'meetingList': curate_meeting_list(meetings_from_db),
+		'time': time_cutoff()
+	})
 
 """"""
 
