@@ -186,6 +186,10 @@ def send_graph_page():
 
 """"""
 
+@app.route('/about')
+def about():
+	return render_template('about_bs.html')
+
 @app.route('/update')
 def update():
 	return str(master_run.update(app.config['DATABASE']))
