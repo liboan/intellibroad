@@ -281,7 +281,17 @@ def push_events_to_database(db_file, items):
 				# Now we add employees and invitations. If no screen name, use their email instead.
 
 				for attendee in item['attendees']:
-					write_employees(attendee['email'], attendee.get('displayName', attendee['email']), item['updated'])
+					# check last_updated!
+					c.execute('SELECT last_meeting FROM employees WHERE employee_id=?', (attendee['email'],))
+					last_meeting = c.fetchone()
+
+					if not last_meeting:
+						# if there's no record for last_meeting, make one!
+						write_employees(attendee['email'], attendee.get('displayName', attendee['email']), item['updated'])
+					else:
+						if item['updated'] > last_meeting[0]:
+							# if updated time is newer, overwrite.
+							write_employees(attendee['email'], attendee.get('displayName', attendee['email']), item['updated'])
 					write_invitations(item['id'], attendee['email'], attendee['responseStatus'])	
 
 	conn.commit()
