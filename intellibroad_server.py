@@ -10,12 +10,22 @@ import master_run
 from querys import *
 from people_graph import *
 
+import argparse
+
+parser = argparse.ArgumentParser(description='IntelliBroad flask server. Need to specify location of database.')
+
+parser.add_argument('-db', help='Path to database file.', default='intellibroad.db')
+
+args = parser.parse_args()
+
+print("DATABASE LOCATION: " + args.db)
+
 app = Flask(__name__)
 
 app.config.from_object(__name__)
 
 app.config.update(dict(
-	DATABASE=os.path.join(app.root_path, 'intellibroad.db')
+	DATABASE=args.db
 	))
 
 Bootstrap(app) # Load Bootstrap for templates!

@@ -19,9 +19,6 @@ parser.add_argument('--get-from', default=0, help='get all events from 1 to 20 d
 
 args = parser.parse_args()
 
-print("####ARGS####")
-print(args)
-
 credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
 client_secret_file = args.secret # 'client_secret.json'
 credentials_file = args.credentials # 'credentials.json'
