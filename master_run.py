@@ -91,5 +91,7 @@ def update(db_file = args.db):
 		return 1
 
 if __name__ == '__main__':
+	print("######ARGS######")
+	print(args)
 	update()
 
