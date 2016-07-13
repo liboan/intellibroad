@@ -1,12 +1,39 @@
 {% extends 'layout_bs.html' %}
 {% block page_data %}
 	<div class='row'>
-		<h2 class='employeeName'>{{ response['info']['name'] }}</h2>
-		<h4 class='emailAddress'>
-			<a href="mailto:{{ response['info']['employee_id'] }}">
-				{{ response['info']['employee_id'] }}
+		<div class='col-md-12'>
+			<h2 class='employeeName'>{{ response['info']['name'] }}</h2>
+			<h4 class='emailAddress'>
+				<a href="mailto:{{ response['info']['employee_id'] }}">
+					{{ response['info']['employee_id'] }}
+				</a>
+			</h4>
+		</div>
+	</div>
+	<div class='row'>
+		<div class='col-md-12'>
+			
+			<a id='visButton' class="btn btn-primary" role="button" data-toggle="collapse" href=".visCollapse" aria-expanded="false" aria-controls="collapseExample">
+				Show Visualizations (experimental, takes a while to load)
 			</a>
-		</h4>
+		</div>
+		<br>
+	</div>
+	<div class='row'>
+		<div class='col-md-7 '>
+
+			<div class='well collapse visCollapse'>
+				<h5>Network of top 15 connections</h5>
+				<div class='container' id='network'></div>
+			</div>
+		</div>
+		<div class='col-md-5 '>
+
+			<div class='well collapse visCollapse'>
+				<h5>Most commonly occurring words in person's meeting titles</h5>
+				<canvas id='wordcloud' ></canvas>
+			</div>
+		</div>
 	</div>
 	<div class='row'>
 		<div class='col-md-7'>
@@ -18,4 +45,72 @@
 			{{ renderPersonList(response['similarPeople'], "# of matching meetings") }}
 		</div>
 	</div>
+	<!-- SCRIPT STUFF FOR NETWORK & WORDCLOUD -->
+	<script type="text/javascript" src='{{ url_for("static", filename="js/wordcloud2.js") }}'></script>
+	<script type="text/javascript" src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'></script>
+	<script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js'></script>
+	<script type="text/javascript">
+		employee_id = "{{ response['info']['employee_id'] }}";
+
+		function makeNetwork() {
+			console.log('MAKING NETWORK')
+			$.get("/graph", {employee_id: employee_id}, function (data) {
+				a = JSON.parse(data);
+
+				nodeList = [];
+				edgeList = [];
+
+				for (var i = a[0].length - 1; i >= 0; i--) {
+					//nodes.push(a[0][i]);
+					nodeList.push({
+						id: a[0][i],
+						label: a[0][i]
+					});
+				}
+				for (var i = a[1].length - 1; i >= 0; i--) {
+					edgeList.push({
+						from: a[1][i][0],
+						to: a[1][i][1]
+					});
+				}
+
+				var nodes = new vis.DataSet(nodeList);
+				var edges = new vis.DataSet(edgeList);
+
+				var container = document.getElementById('network');
+
+				var data = {
+					nodes: nodes,
+					edges: edges
+				};
+				var options = {
+					height: '400px',
+					width: Math.floor($("#network").parent().width()).toString() + 'px',
+				};
+				var network = new vis.Network(container, data, options)
+			});
+		}
+
+		function makeWordCloud() {
+			$.get('/wordcloud', {'employee_id': employee_id}, function(data) {
+				a = JSON.parse(data);
+
+				options = {
+					list: a,
+					fontFamily: "sans-serif",
+					weightFactor: function (x) {
+						return Math.pow(x, 0.6666)*200;
+					}
+				};
+
+				WordCloud(document.getElementById('wordcloud'), options)
+			});
+		}
+
+		$('#visButton').one('click', function() {
+			makeWordCloud();
+			makeNetwork();
+		})
+
+	</script>
 {% endblock page_data %}

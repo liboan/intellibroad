@@ -1,6 +1,9 @@
+from __future__ import division
+
 import os
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, send_from_directory
 from flask_bootstrap import Bootstrap
+
 
 import datetime
 import master_run
@@ -154,7 +157,7 @@ def generate_employee_graph(employee_row):
 	add_node(employee_graph, employee_row['name']) # Add employee's row as a node.
 
 	first_order_connections = query_person_similar_people(app.config['DATABASE'], employee_row['employee_id'])
-	first_order_connections = first_order_connections[0:20]
+	first_order_connections = first_order_connections[0:15]
 	# Add all 20 1st-order connections to graph.
 	for connection in first_order_connections:
 		add_node(employee_graph, connection['name'])
@@ -174,15 +177,30 @@ def generate_employee_graph(employee_row):
 
 @app.route('/graph')
 def display_graph():
-	row = query_person_by_id(app.config['DATABASE'], 'aviad@broadinstitute.org')
+	row = query_person_by_id(app.config['DATABASE'], request.args['employee_id'])
 	graph = generate_employee_graph(row)
 	return json.dumps(graph)
 
-@app.route('/graphpage')
-def send_graph_page():
-	return send_from_directory('static',"vis_js_test.html")
+""""""
 
+""" WORDCLOUD for common keywords """
 
+def generate_employee_keywords(employee_row):
+	"""Given an employee row, returns a list of tuples [word, frequency]"""
+	keywords = query_person_keywords(app.config['DATABASE'], employee_row['employee_id'])
+
+	total = sum([word[1] for word in keywords]) # add up
+	freqs = [word[1]/total for word in keywords] # get frequencies
+
+	keywordFreqs = zip([word[0] for word in keywords], freqs) # zip each word with its frequency
+	print(keywordFreqs)
+	return keywordFreqs
+
+@app.route('/wordcloud')
+def display_wordcloud():
+	row = query_person_by_id(app.config['DATABASE'], request.args['employee_id'])
+	keywords = generate_employee_keywords(row)
+	return json.dumps(keywords)
 
 """"""
 

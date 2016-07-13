@@ -1,5 +1,9 @@
 from __future__ import division
 import sqlite3
+
+import nltk
+from collections import Counter
+
 import argparse
 import datetime	
 
@@ -208,6 +212,41 @@ def query_person_similar_people(db_file, employee_id, max_results=20):
 	results = c.fetchall()[0:max_results]
 	conn.close()
 	return results
+
+def query_person_keywords(db_file, employee_id, max_results=30):
+	"""Returns a list of tuples (keyword, count) of the most frequently-ocurring keywords
+	for a given employee's meeting titles. Filters out stopwords and odd symbols but
+	nothing else
+
+	db_file: path to database, a string
+	employee_id: person's id (email address), a string
+	max_results: integer, max number of results to return
+	"""
+	conn = create_connection(db_file)
+	conn.row_factory = sqlite3.Row
+	c = conn.cursor()
+
+	queryString = """SELECT name FROM events WHERE event_id in 
+	(SELECT event_id FROM invitations WHERE employee_id LIKE ?)"""
+	c.execute(queryString, (employee_id,))
+	rowList = c.fetchall()
+
+	stringList = [row[0] for row in rowList]
+
+	corpusString = ' '.join(stringList)
+
+
+	wordList = corpusString.split(' ')
+
+	# stuff to filter out
+	extraTerms = ['-', '', "&"]
+	excludeList = nltk.corpus.stopwords.words('english') + nltk.corpus.names.words() + extraTerms
+
+	filteredWordList = [word.lower() for word in wordList if word not in excludeList]
+
+	conn.close()
+	
+	return Counter(filteredWordList).most_common(50)
 
 """MEETING QUERYING"""
 
