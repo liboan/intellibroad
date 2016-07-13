@@ -14,8 +14,8 @@
 			{{ renderMeetingList(response['nearbyMeetings']) }}
 		</div>
 		<div class='col-md-5'>
-			<h2>People with similar subject knowledge</h2>
-			{{ renderPersonList(response['similarPeople']) }}
+			<h2>People who have attended the same meetings as this person</h2>
+			{{ renderPersonList(response['similarPeople'], "# of matching meetings") }}
 		</div>
 	</div>
 {% endblock page_data %}

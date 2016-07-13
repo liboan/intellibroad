@@ -1,7 +1,7 @@
 from __future__ import division
 import sqlite3
 import argparse
-import datetime
+import datetime	
 
 from master import *
 
@@ -136,7 +136,7 @@ def query_topic_meetings(db_file, term, lower_bound_days=30, upper_bound_days=30
 	# time bounds, we will plug these into SQLite and search between them
 
 	queryString = """
-	SELECT * FROM events WHERE name LIKE ? OR description LIKE ? AND start_time > ? AND start_time < ? ORDER BY start_time ASC"""
+	SELECT * FROM events WHERE (name LIKE ? OR description LIKE ?) AND start_time > ? AND start_time < ? ORDER BY start_time ASC"""
 
 	c.execute(queryString, (term, term, pastBound, futureBound))
 
@@ -231,7 +231,7 @@ def query_meeting_people(db_file, event_id):
 	conn.close()
 	return results
 
-def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplicate_names=True):
+def query_meeting_similar_meetings(db_file, event_id, max_results=20, no_duplicate_names=True):
 	"""Returns a list of DICTIONARIES objects for events, ordered from most to least similar to
 	the searched event by Jaccard index of their attendees.\n
 	db_file: path to database, a string
@@ -263,7 +263,7 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=10, no_duplica
 
 			# make the row into a dict so we can add its Jaccard index
 			row_with_score = dict(row)
-			row_with_score['jaccard_score'] = scores[i][1]
+			row_with_score['matches'] = scores[i][1]
 			rowList.append(row_with_score)
 		i += 1 
 
@@ -314,25 +314,30 @@ def calculate_meeting_similarity(db_file, event_id):
 	for x in event_list:
 		c.execute('SELECT employee_id FROM invitations WHERE event_id = ?', (x,))
 		x_attendees = [i[0] for i in c.fetchall()] # rows will have tuples, first element is employee_id
-		x_score = jaccard(attendees, x_attendees)
+		x_score = set_intersection_union(attendees, x_attendees)
 		scores.append((x, x_score))
 
-	scores.sort(key=lambda x: x[1],reverse=True) # sort list by scores (second member of the tuple)
+	scores.sort(key=lambda x: x[1][0] ,reverse=True) # sort list by scores (second member of the tuple)
 
 	
 	conn.close()
 	return scores
 	
 
-def jaccard(list1, list2):
-	"""Calculates Jaccard index of two lists. Returns integer between 0 and 1
-	list1, list2: lists of strings or integers
+def set_intersection_union(list1, list2):
+	"""Returns a tuple consisting of (intersection, union) of list1 and list2.
 	"""
 	set1 = set(list1)
 	set2 = set(list2)
-	return len(set.intersection(set1, set2))/len(set.union(set1,set2))
+	return (len(set.intersection(set1, set2)),len(set.union(set1,set2)))
 
 """"""""""""""""""
+
+"""EMPLOYEE KEYWORDS"""
+
+
+
+""""""
 
 
 

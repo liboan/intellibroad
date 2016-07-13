@@ -1,15 +1,13 @@
 {% extends "bootstrap/base.html" %}
 
-{% macro renderPersonList(data) -%}
+{% macro renderPersonList(data, count_heading) -%}
 	<div class='table-responsive'>
 		<table class='table table-hover table-condensed'>
 			<tr>
 				<th>Name</th>
 
 				{% if 'count(*)' in data[0] %}
-					<th title='Number of events shared by these two people'>
-						<a>Similarity Score</a>
-					</th>
+					<th>{{ count_heading }}</th>
 				{% endif %}
 
 				<th>Email</th>
@@ -38,7 +36,7 @@
 	</div>	
 {%- endmacro %}
 
-{% macro renderMeetingList(data) -%}
+{% macro renderMeetingList(data, count_heading) -%}
 	<div class='table-responsive'>
 		<table class='table table-hover table-condensed'>
 			<tr>
@@ -46,9 +44,9 @@
 				<th>Time</th>
 				<th>Location</th>
 
-				{% if 'jaccard_score' in data[0] %}
-					<th title='Jaccard index of the attendees of both events'>
-						<a>Similarity Score</a>
+				{% if 'matches' in data[0] %}
+					<th>
+						{{ count_heading }}
 					</th>
 				{% endif %}
 
@@ -61,8 +59,8 @@
 					<td>{{ row['start_time'] }}</td>
 					<td>{{ row['location'] }}</td>
 
-					{% if 'jaccard_score' in row %}
-						<td>{{ row['jaccard_score'] }}</td>
+					{% if 'matches' in row %}
+						<td>{{ row['matches'][0] }} / {{ row['matches'][1] }}</td>
 					{% endif %}
 
 					<td><a href="{{ row['htmlLink'] }}" target="_blank">Link</a></td>

@@ -17,8 +17,8 @@
 			{{ renderPersonList(response['meetingAttendees']) }}
 		</div>
 		<div class='col-md-7'>
-			<h2>Meetings with similar attendance</h2>
-			{{ renderMeetingList(response['similarMeetings']) }}
+			<h2>Meetings that share attendees with this meeting</h2>
+			{{ renderMeetingList(response['similarMeetings'], 'Matching attendees / All attendees') }}
 		</div>
 	</div>
 
