@@ -93,7 +93,7 @@ def query_meeting_search(db_file, term):
 
 """TOPIC QUERYING"""
 
-def query_topic_employees(db_file, term, max_results=50):
+def query_topic_employees(db_file, term, max_results=200):
 	"""Searches database and returns list of sqlite3.Row objects for each employee who showed up in a relevant event, ordered from most to least frequent. \n 
 	db_file: path to database, a string
 	term: search term, a string
@@ -123,7 +123,7 @@ def query_topic_employees(db_file, term, max_results=50):
 	conn.close()
 	return results
 
-def query_topic_meetings(db_file, term, lower_bound_days=30, upper_bound_days=30):
+def query_topic_meetings(db_file, term, lower_bound_days=90, upper_bound_days=90):
 	"""Searches database and returns list of sqlite3.Row objects for meetings whose title contains term.
 	To be helpful, we return relevant meetings occurring within a given time range of search.\n
 	db_file: path to database, a string
@@ -156,7 +156,7 @@ def query_topic_meetings(db_file, term, lower_bound_days=30, upper_bound_days=30
 
 """PERSON QUERYING"""
 
-def query_person_meetings(db_file, employee_id, lower_bound_days=30, upper_bound_days=30):
+def query_person_meetings(db_file, employee_id, lower_bound_days=9000, upper_bound_days=30):
 	"""Searches database and returns list of sqlite3.Row objects for meetings person was invited to.
 	We only return meetings occurring within a given time range of search. \n
 	db_file: path to database, a string
@@ -187,7 +187,7 @@ def query_person_meetings(db_file, employee_id, lower_bound_days=30, upper_bound
 	conn.close()
 	return results
 
-def query_person_similar_people(db_file, employee_id, max_results=20):
+def query_person_similar_people(db_file, employee_id, max_results=200):
 	"""Searches database and returns list of sqlite3.Row objects for people the searched person share
 	meetings with, in order of most shared meetings. \n
 	db_file: path to database, a string
@@ -250,7 +250,7 @@ def query_person_keywords(db_file, employee_id, max_results=30):
 
 	conn.close()
 	
-	return Counter(filteredWordList).most_common(50)
+	return Counter(filteredWordList).most_common(max_results)
 
 """MEETING QUERYING"""
 
@@ -274,9 +274,9 @@ def query_meeting_people(db_file, event_id):
 	conn.close()
 	return results
 
-def query_meeting_similar_meetings(db_file, event_id, max_results=20, no_duplicate_names=True):
+def query_meeting_similar_meetings(db_file, event_id, max_results=50, no_duplicate_names=True):
 	"""Returns a list of DICTIONARIES objects for events, ordered from most to least similar to
-	the searched event by Jaccard index of their attendees.\n
+	the searched event by # of overlaps of their attendees.\n
 	db_file: path to database, a string
 	event_id: ID of event, a string
 	max_results: however many results are wanted, an integer
@@ -299,6 +299,8 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=20, no_duplica
 		c.execute('SELECT * FROM events WHERE event_id = ?', (scores[i][0],)) # event ID is first member of tuple
 		row = c.fetchone()
 		if not row:
+			print("NONE ROW " + str(i))
+			print(len(c.fetchall()))
 			# if the row is None, break out, no more results.
 			break
 
@@ -311,6 +313,7 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=20, no_duplica
 			# make the row into a dict so we can add its Jaccard index
 			row_with_score = dict(row)
 			row_with_score['matches'] = scores[i][1]
+
 			rowList.append(row_with_score)
 		i += 1 
 
@@ -366,8 +369,10 @@ def calculate_meeting_similarity(db_file, event_id):
 
 	scores.sort(key=lambda x: x[1][0] ,reverse=True) # sort list by scores (second member of the tuple)
 
-	
 	conn.close()
+
+	print(len(scores))
+
 	return scores
 	
 

@@ -17,8 +17,8 @@
 			{{ renderPersonList(response['meetingAttendees'], '', response['time']) }}
 		</div>
 		<div class='col-md-7'>
-			<h2>Meetings that share attendees with this meeting</h2>
-			{{ renderMeetingList(response['similarMeetings'], 'Matching attendees / All attendees') }}
+			<h2>Meetings that share attendees</h2>
+			{{ renderMeetingList(response['similarMeetings'], 'Shared / Total') }}
 		</div>
 	</div>
 
@@ -27,8 +27,10 @@
 	<script type="text/javascript" src="{{ url_for('static', filename='js/nlp.js') }}"></script>
 	<script type="text/javascript">
 		a = "{{ response['info']['recurrence'] }}";
-		a_natural = "Repeats: " + rrulestr(a.substring(a.search("RRULE:")+6)).toText();
-		document.getElementsByClassName('recurrence')[0].innerHTML = a_natural;
+		if (a.length != 0) {
+			a_natural = "Repeats: " + rrulestr(a.substring(a.search("RRULE:")+6)).toText();
+			document.getElementsByClassName('recurrence')[0].innerHTML = a_natural;
+		}
 	</script>
 
 {% endblock page_data %}

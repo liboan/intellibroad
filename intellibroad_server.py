@@ -112,7 +112,7 @@ def search_meeting(term):
 	}
 	return render_template('home_bs.html', response=response)
 
-def search_topic(term, lower_bound_days=30, upper_bound_days=30):
+def search_topic(term, lower_bound_days=9000, upper_bound_days=90):
 	"""responds to a search request for a topic and returns a table of search results\n
 	request: passed from Flask
 	lower_bound_days and upper_bound_days: number of days to search in past and future (all > 0!), an integer
@@ -222,6 +222,7 @@ def display_wordcloud():
 	return json.dumps(keywords)
 
 """"""
+
 
 @app.route('/about')
 def about():

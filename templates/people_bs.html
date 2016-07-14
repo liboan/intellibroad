@@ -42,12 +42,11 @@
 		</div>
 		<div class='col-md-5'>
 			<h2>People who have attended the same meetings as this person</h2>
-			{{ renderPersonList(response['similarPeople'], "# of matching meetings", response['time']) }}
+			{{ renderPersonList(response['similarPeople'], "# of matches", response['time']) }}
 		</div>
 	</div>
 	<!-- SCRIPT STUFF FOR NETWORK & WORDCLOUD -->
 	<script type="text/javascript" src='{{ url_for("static", filename="js/wordcloud2.js") }}'></script>
-	<script type="text/javascript" src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'></script>
 	<script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.min.js'></script>
 	<script type="text/javascript">
 		employee_id = "{{ response['info']['employee_id'] }}";

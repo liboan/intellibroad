@@ -2,77 +2,111 @@
 
 {% macro renderPersonList(data, count_heading, time) -%}
 	<div class='table-responsive'>
-		<table class='table table-hover table-condensed'>
-			<tr>
-				<th>Name</th>
+		<table class='table table-hover table-condensed' id='personList'>
+			<thead>
+				<tr>
+					<th>Name</th>
 
-				{% if 'count(*)' in data[0] %}
-					<th>{{ count_heading }}</th>
-				{% endif %}
-
-				<th>Email</th>
-			</tr>
-
-			{% for row in data %}
-				<tr 
-				{% if row['last_meeting'] < time %}
-				class='noactivity'
-				title='Has not been to a meeting for 90+ days. Check the Broad directory if he or she is still around.'
-				{% endif %}
-				 >
-					<td><a href="/item?itemType=person&id={{ row['employee_id'] }}">{{ row['name'] }}</a></td>
-
-					{% if 'count(*)' in row %}
-						<td>
-							{{ row['count(*)'] }}
-						</td>
+					{% if 'count(*)' in data[0] %}
+						<th>{{ count_heading }}</th>
 					{% endif %}
 
-					<td>
-						<a href="mailto:{{ row['employee_id'] }}">
-							{{ row['employee_id'] }}
-						</a>
-					</td>
-
+					<th>Email</th>
 				</tr>
-			{% endfor %}
+			</thead>
+			<tbody>
+
+				{% for row in data %}
+					<tr 
+					{% if row['last_meeting'] < time %}
+					class='noactivity'
+					title='Has not been invited to a meeting in a conference room for 90+ days. Check the Broad directory to see if he or she is still around.'
+					{% endif %}
+					 >
+						<td><a href="/item?itemType=person&id={{ row['employee_id'] }}">{{ row['name'] }}</a></td>
+
+						{% if 'count(*)' in row %}
+							<td>
+								{{ row['count(*)'] }}
+							</td>
+						{% endif %}
+
+						<td>
+							<a href="mailto:{{ row['employee_id'] }}">
+								{{ row['employee_id'] }}
+							</a>
+						</td>
+
+					</tr>
+				{% endfor %}
+			</tbody>
 
 		</table>
 	</div>	
+	<script type="text/javascript">
+		$(document).ready(function () {
+			order = [[0, 'asc']];
+			{% if 'count(*)' in data[0] %}
+				order = [[1,'desc']];
+			{% endif %}
+
+			$("#personList").DataTable({
+				order: order
+			});
+		});
+
+	</script>
 {%- endmacro %}
 
 {% macro renderMeetingList(data, count_heading) -%}
 	<div class='table-responsive'>
-		<table class='table table-hover table-condensed'>
-			<tr>
-				<th class='col-md-6'>Name</th>
-				<th class='col-md-2'>Time</th>
-				<th>Location</th>
-
-				{% if 'matches' in data[0] %}
-					<th>
-						{{ count_heading }}
-					</th>
-				{% endif %}
-
-				<th>Google Calendar</th>
-			</tr>
-
-			{% for row in data %}
+		<table class='table table-hover table-condensed' id='eventList'>
+			<thead>
 				<tr>
-					<td><a href="/item?itemType=meeting&id={{ row['event_id'] }}">{{ row['name'] }}</a></td>
-					<td>{{ row['start_time'] }}</td>
-					<td>{{ row['location'] }}</td>
+					<th class='col-md-4'>Name</th>
+					<th class='col-md-2'>Time</th>
+					<th>Location</th>
 
-					{% if 'matches' in row %}
-						<td>{{ row['matches'][0] }} / {{ row['matches'][1] }}</td>
+					{% if 'matches' in data[0] %}
+						<th>
+							{{ count_heading }}
+						</th>
 					{% endif %}
 
-					<td><a href="{{ row['htmlLink'] }}" target="_blank">Link</a></td>
+					<th>Google Calendar</th>
 				</tr>
-			{% endfor %}
+			</thead>
+
+			<tbody>
+				{% for row in data %}
+					<tr>
+						<td><a href="/item?itemType=meeting&id={{ row['event_id'] }}">{{ row['name'] }}</a></td>
+						<td>{{ row['start_time'] }}</td>
+						<td>{{ row['location'] }}</td>
+
+						{% if 'matches' in row %}
+							<td>{{ row['matches'][0] }} / {{ row['matches'][1] }}</td>
+						{% endif %}
+
+						<td><a href="{{ row['htmlLink'] }}" target="_blank">Link</a></td>
+					</tr>
+				{% endfor %}
+			</tbody>
 
 		</table>
+		<script type="text/javascript">
+			$(document).ready(function () { 
+				order = [[1, 'desc']];
+
+				{% if 'matches' in data[0] %}
+				order = [[3, 'desc']];
+				{% endif %}
+
+				$("#eventList").DataTable({
+					order: order
+				});
+			});
+		</script>
 	</div>
 {%- endmacro %}
 
@@ -85,6 +119,7 @@ IntelliBroad
 {% block styles %}
 {{ super() }}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/dataTables.bootstrap.css"/>
 {% endblock %}
 
 
@@ -92,8 +127,13 @@ IntelliBroad
 {% block body %}
 
 	{% block scripts %}
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 	{{ super() }}
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+	<script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.js"></script>
+	<script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.js"></script>
+
 	{% endblock %}
 
 	{% block navbar %}
