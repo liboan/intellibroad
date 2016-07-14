@@ -95,7 +95,9 @@
 
 		</table>
 		<script type="text/javascript">
+
 			$(document).ready(function () { 
+
 				order = [[1, 'desc']];
 
 				{% if 'matches' in data[0] %}
@@ -103,7 +105,10 @@
 				{% endif %}
 
 				$("#eventList").DataTable({
-					order: order
+					order: order,
+					columnDefs: [
+						{type: 'natural', targets: 3},
+					]
 				});
 			});
 		</script>
@@ -133,6 +138,7 @@ IntelliBroad
 
 	<script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.js"></script>
 	<script type="text/javascript" src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.js"></script>
+	<script type="text/javascript" src='https://cdn.datatables.net/plug-ins/1.10.12/sorting/natural.js'></script>
 
 	{% endblock %}
 
