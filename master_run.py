@@ -19,14 +19,14 @@ parser.add_argument('--get-from', default=0, help='get all events from 1 to 20 d
 
 args = parser.parse_args()
 
-credentials_dir = args.cred_dir # "/Users/alee/Documents/secret"
-client_secret_file = args.secret # 'client_secret.json'
-credentials_file = args.credentials # 'credentials.json'
+ # "/Users/alee/Documents/secret"
+ # 'client_secret.json'
+ # 'credentials.json'
 # db_file = args.db # 'intellibroad.db'
 
 from master import *
 
-def update(db_file = args.db):
+def update(db_file = args.db, credentials_dir = args.cred_dir, client_secret_file = args.secret, credentials_file = args.credentials):
 	"""Master update function, should be called regularly to pull event data and push it to database.\n
 	Returns 0 if no error, 1 if there is an error.
 	"""

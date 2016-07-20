@@ -6,15 +6,17 @@ from flask_bootstrap import Bootstrap
 
 
 import datetime
-import master_run
 from querys import *
 from people_graph import *
 
 import argparse
 
-parser = argparse.ArgumentParser(description='IntelliBroad flask server. Need to specify location of database.')
+parser = argparse.ArgumentParser(description='IntelliBroad flask server. ')
 
-parser.add_argument('-db', help='Path to database file.', default='intellibroad.db')
+
+parser.add_argument('-db', help='Path to database file', default='intellibroad.db', )
+parser.add_argument('--port', help='Port number to host server on', default='5000')
+parser.add_argument('--debug', help='Run Flask server with debug mode enabled', action='store_true')
 
 args = parser.parse_args()
 
@@ -50,8 +52,6 @@ def get_item_by_id():
 	We are expecting a query string with arguments itemType (person or meeting)
 	and id (the id)
 	"""
-	print(request.query_string)
-
 	item_type = request.args.get('itemType')
 	item_id = request.args.get('id')
 
@@ -228,13 +228,9 @@ def display_wordcloud():
 def about():
 	return render_template('about_bs.html')
 
-@app.route('/update')
-def update():
-	return str(master_run.update(app.config['DATABASE']))
-
 
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', debug=True)
+	app.run(host='0.0.0.0', port=args.port, debug=args.debug)
 
 
 

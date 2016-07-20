@@ -9,13 +9,6 @@ import datetime
 
 from master import *
 
-
-parser = argparse.ArgumentParser(description='Test script for database query methods')
-# parser.add_argument('queryString', metavar='search', type=str, help='Search term')
-parser.add_argument('-db')
-
-args = parser.parse_args()
-
 import os
 
 os.system("python -m nltk.downloader stopwords names")
@@ -100,7 +93,6 @@ def query_topic_employees(db_file, term, max_results=200):
 	max_results: integer, max number of results to return"""
 
 	term = str(term) # convert search term, just to be sure
-	print(term)
 	term = '%' + term + '%' # so that SQLite will return all strings containing term
 
 	conn = create_connection(db_file)
@@ -132,7 +124,6 @@ def query_topic_meetings(db_file, term, lower_bound_days=90, upper_bound_days=90
 	"""
 
 	term = str(term) # convert search term, just to be sure
-	print(term)
 	term = '%' + term + '%' # so that SQLite will return all strings containing term
 
 	conn = create_connection(db_file)
@@ -164,7 +155,6 @@ def query_person_meetings(db_file, employee_id, lower_bound_days=9000, upper_bou
 	lower_bound_days and upper_bound_days: number of days to search in past and future (all > 0!), an integer
 	"""
 	if '@' not in employee_id:
-		print("NOT AN EMAIL ADDRESS")
 		return None
 
 	conn = create_connection(db_file)
@@ -195,7 +185,6 @@ def query_person_similar_people(db_file, employee_id, max_results=200):
 	max_results: integer, max number of results to return
 	"""
 	if '@' not in employee_id:
-		print("NOT AN EMAIL ADDRESS")
 		return None
 
 	conn = create_connection(db_file)
@@ -299,8 +288,6 @@ def query_meeting_similar_meetings(db_file, event_id, max_results=50, no_duplica
 		c.execute('SELECT * FROM events WHERE event_id = ?', (scores[i][0],)) # event ID is first member of tuple
 		row = c.fetchone()
 		if not row:
-			print("NONE ROW " + str(i))
-			print(len(c.fetchall()))
 			# if the row is None, break out, no more results.
 			break
 
@@ -371,7 +358,6 @@ def calculate_meeting_similarity(db_file, event_id):
 
 	conn.close()
 
-	print(len(scores))
 
 	return scores
 	
