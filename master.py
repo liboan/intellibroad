@@ -260,13 +260,13 @@ def push_events_to_database(db_file, items):
 				# IDs of recurring instances have an _ after them with a timestamp. Removing that makes 
 				# all recurrences have identical IDs. The database will only accept the first one added,
 				# and will ignore all others.
-				item['id'] = item['id'].split('_')[0]
+				# item['id'] = item['id'].split('_')[0]
 
 				# MAKE SURE THESE MATCH THE ORDER OF THE event TABLE COLUMNS!!!
 				# Fields will get a space if they do not exist
 
 				event_values = [
-					item.get('id', ''),
+					item.get('id', '').split('_')[0],
 					item.get('summary', ''), 
 					item.get('description', ''), 
 					item.get('start').get('dateTime', ''), 
