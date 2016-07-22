@@ -339,7 +339,8 @@ def calculate_meeting_similarity(db_file, event_id):
 
 	# Get the attendees of the event that was passed in
 
-	c.execute('SELECT employee_id FROM invitations WHERE event_id = ?', (event_id,))
+	c.execute('''SELECT employee_id FROM invitations WHERE event_id = ? 
+			AND employee_id NOT LIKE "%.google.com"''', (event_id,))
 	attendees = [i[0] for i in c.fetchall()]
 
 	####################################

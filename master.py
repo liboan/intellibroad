@@ -250,9 +250,9 @@ def push_events_to_database(db_file, items):
 			# attendees, we don't want events without start times (because what would those be anyways)
 
 			# We're deleting all rooms or resources from list of attendees.
-			for attendee in item['attendees']:
-				if '.google.com' in attendee['email']:
-					item['attendees'].remove(attendee)
+			# for attendee in item['attendees']:
+			# 	if '.google.com' in attendee['email']:
+			# 		item['attendees'].remove(attendee)
 
 			# If the event has no attendees now, don't bother adding it.
 			if len(item['attendees']) > 0:
